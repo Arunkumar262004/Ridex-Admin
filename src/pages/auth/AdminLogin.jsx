@@ -37,8 +37,10 @@ const AdminLogin = () => {
       setLoading(true);
       setError('');
       const res = await loginAdmin(email, password);
-      localStorage.setItem('ridex_admin_token', res.token || 'DEMO_ADMIN_JWT_' + Date.now());
-      localStorage.setItem('ridex_admin_user', JSON.stringify(res.user || { name: 'Super Admin', email }));
+      const token = res.token || res.data?.token || 'DEMO_ADMIN_JWT_' + Date.now();
+      const user = res.user || res.data?.user || { name: 'Super Admin', email };
+      localStorage.setItem('ridex_admin_token', token);
+      localStorage.setItem('ridex_admin_user', JSON.stringify(user));
       navigate('/');
     } catch (err) {
       localStorage.setItem('ridex_admin_token', 'DEMO_ADMIN_JWT_' + Date.now());

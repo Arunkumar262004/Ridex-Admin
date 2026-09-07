@@ -22,33 +22,90 @@ api.interceptors.request.use((config) => {
 let brandsIdCache = {};
 let categoriesIdCache = {};
 
+const DEFAULT_BRANDS = ['Honda', 'Hero', 'TVS', 'Bajaj', 'Yamaha', 'Suzuki', 'Royal Enfield', 'Ather', 'Ola Electric', 'KTM', 'Kawasaki'];
+const DEFAULT_CATEGORIES = ['Bike', 'Auto', 'Cab Economy', 'Cab Premium'];
+
+const getStoredBrands = () => {
+  const stored = localStorage.getItem('ridex_master_brands_db');
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch (e) {}
+  }
+  localStorage.setItem('ridex_master_brands_db', JSON.stringify(DEFAULT_BRANDS));
+  return DEFAULT_BRANDS;
+};
+
+const saveStoredBrands = (list) => {
+  localStorage.setItem('ridex_master_brands_db', JSON.stringify(list));
+};
+
+const getStoredCategories = () => {
+  const stored = localStorage.getItem('ridex_master_categories_db');
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch (e) {}
+  }
+  localStorage.setItem('ridex_master_categories_db', JSON.stringify(DEFAULT_CATEGORIES));
+  return DEFAULT_CATEGORIES;
+};
+
+const saveStoredCategories = (list) => {
+  localStorage.setItem('ridex_master_categories_db', JSON.stringify(list));
+};
+
 // Master Brands API
 export const getMasterBrands = async () => {
   try {
     const res = await api.get('/vehicle-brands');
     const list = Array.isArray(res.data?.data) ? res.data.data : [];
-    brandsIdCache = {};
-    list.forEach((b) => { brandsIdCache[b.name] = b._id; });
-    return list.map((b) => b.name);
-  } catch (err) {
-    return [];
-  }
+    if (list.length > 0) {
+      brandsIdCache = {};
+      list.forEach((b) => { brandsIdCache[b.name] = b._id; });
+      const names = list.map((b) => b.name);
+      saveStoredBrands(names);
+      return names;
+    }
+  } catch (err) {}
+  return getStoredBrands();
 };
 
 export const addMasterBrand = async (brandName) => {
-  await api.post('/vehicle-brands', { name: brandName });
+  let localList = getStoredBrands();
+  if (!localList.includes(brandName)) {
+    localList.push(brandName);
+    saveStoredBrands(localList);
+  }
+  try {
+    await api.post('/vehicle-brands', { name: brandName });
+  } catch (err) {
+    console.warn('API addMasterBrand error:', err);
+  }
   return getMasterBrands();
 };
 
 export const deleteMasterBrand = async (brandName) => {
-  const id = brandsIdCache[brandName];
-  if (id) await api.delete(`/vehicle-brands/${id}`);
+  let localList = getStoredBrands();
+  localList = localList.filter((b) => b !== brandName);
+  saveStoredBrands(localList);
+  try {
+    const id = brandsIdCache[brandName];
+    if (id) await api.delete(`/vehicle-brands/${id}`);
+  } catch (err) {}
   return getMasterBrands();
 };
 
 export const editMasterBrand = async (oldBrand, newBrand) => {
-  const id = brandsIdCache[oldBrand];
-  if (id) await api.put(`/vehicle-brands/${id}`, { name: newBrand });
+  let localList = getStoredBrands();
+  localList = localList.map((b) => (b === oldBrand ? newBrand : b));
+  saveStoredBrands(localList);
+  try {
+    const id = brandsIdCache[oldBrand];
+    if (id) await api.put(`/vehicle-brands/${id}`, { name: newBrand });
+  } catch (err) {}
   return getMasterBrands();
 };
 
@@ -57,28 +114,50 @@ export const getMasterCategories = async () => {
   try {
     const res = await api.get('/vehicle-categories');
     const list = Array.isArray(res.data?.data) ? res.data.data : [];
-    categoriesIdCache = {};
-    list.forEach((c) => { categoriesIdCache[c.name] = c._id; });
-    return list.map((c) => c.name);
-  } catch (err) {
-    return [];
-  }
+    if (list.length > 0) {
+      categoriesIdCache = {};
+      list.forEach((c) => { categoriesIdCache[c.name] = c._id; });
+      const names = list.map((c) => c.name);
+      saveStoredCategories(names);
+      return names;
+    }
+  } catch (err) {}
+  return getStoredCategories();
 };
 
 export const addMasterCategory = async (categoryName) => {
-  await api.post('/vehicle-categories', { name: categoryName });
+  let localList = getStoredCategories();
+  if (!localList.includes(categoryName)) {
+    localList.push(categoryName);
+    saveStoredCategories(localList);
+  }
+  try {
+    await api.post('/vehicle-categories', { name: categoryName });
+  } catch (err) {
+    console.warn('API addMasterCategory error:', err);
+  }
   return getMasterCategories();
 };
 
 export const deleteMasterCategory = async (categoryName) => {
-  const id = categoriesIdCache[categoryName];
-  if (id) await api.delete(`/vehicle-categories/${id}`);
+  let localList = getStoredCategories();
+  localList = localList.filter((c) => c !== categoryName);
+  saveStoredCategories(localList);
+  try {
+    const id = categoriesIdCache[categoryName];
+    if (id) await api.delete(`/vehicle-categories/${id}`);
+  } catch (err) {}
   return getMasterCategories();
 };
 
 export const editMasterCategory = async (oldCat, newCat) => {
-  const id = categoriesIdCache[oldCat];
-  if (id) await api.put(`/vehicle-categories/${id}`, { name: newCat });
+  let localList = getStoredCategories();
+  localList = localList.map((c) => (c === oldCat ? newCat : c));
+  saveStoredCategories(localList);
+  try {
+    const id = categoriesIdCache[oldCat];
+    if (id) await api.put(`/vehicle-categories/${id}`, { name: newCat });
+  } catch (err) {}
   return getMasterCategories();
 };
 
@@ -240,7 +319,11 @@ const saveStoredCaptains = (captains) => {
 export const loginAdmin = async (email, password) => {
   try {
     const res = await api.post('/auth/login', { email, password });
-    return res.data;
+    const payload = res.data?.data || res.data;
+    return {
+      token: payload?.token || res.data?.token,
+      user: payload?.user || res.data?.user || { name: 'Admin', email },
+    };
   } catch (err) {
     return {
       token: 'DEMO_ADMIN_TOKEN_' + Date.now(),

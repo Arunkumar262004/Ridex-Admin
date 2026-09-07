@@ -127,153 +127,226 @@ const MasterData = () => {
   const handleAddBrandSubmit = async (e) => {
     e.preventDefault();
     if (!newBrandName.trim()) return;
-    await addMasterBrand(newBrandName.trim());
-    showToast(`Vehicle Brand "${newBrandName.trim()}" added to Master Data!`);
+    const nameToSave = newBrandName.trim();
     setNewBrandName('');
     setIsAddBrandOpen(false);
-    loadAllMasterData();
+    try {
+      await addMasterBrand(nameToSave);
+      showToast(`Vehicle Brand "${nameToSave}" added to Master Data!`);
+    } catch (err) {
+      console.warn('Brand submit error:', err);
+    }
+    await loadAllMasterData();
   };
 
   const handleEditBrandSubmit = async (e) => {
     e.preventDefault();
     if (!editingBrand || !editBrandNameInput.trim()) return;
-    await editMasterBrand(editingBrand.oldName, editBrandNameInput.trim());
-    showToast(`Brand "${editingBrand.oldName}" renamed to "${editBrandNameInput.trim()}"`);
+    const target = editingBrand.oldName;
+    const newName = editBrandNameInput.trim();
     setEditingBrand(null);
     setEditBrandNameInput('');
-    loadAllMasterData();
+    try {
+      await editMasterBrand(target, newName);
+      showToast(`Brand "${target}" renamed to "${newName}"`);
+    } catch (err) {
+      console.warn('Brand edit error:', err);
+    }
+    await loadAllMasterData();
   };
 
   // --- CATEGORY ACTIONS ---
   const handleAddCategorySubmit = async (e) => {
     e.preventDefault();
     if (!newCategoryName.trim()) return;
-    await addMasterCategory(newCategoryName.trim());
-    showToast(`Vehicle Category "${newCategoryName.trim()}" added to Master Data!`);
+    const catName = newCategoryName.trim();
     setNewCategoryName('');
     setIsAddCategoryOpen(false);
-    loadAllMasterData();
+    try {
+      await addMasterCategory(catName);
+      showToast(`Vehicle Category "${catName}" added to Master Data!`);
+    } catch (err) {
+      console.warn('Category submit error:', err);
+    }
+    await loadAllMasterData();
   };
 
   const handleEditCategorySubmit = async (e) => {
     e.preventDefault();
     if (!editingCategory || !editCategoryNameInput.trim()) return;
-    await editMasterCategory(editingCategory.oldName, editCategoryNameInput.trim());
-    showToast(`Category "${editingCategory.oldName}" renamed to "${editCategoryNameInput.trim()}"`);
+    const target = editingCategory.oldName;
+    const newName = editCategoryNameInput.trim();
     setEditingCategory(null);
     setEditCategoryNameInput('');
-    loadAllMasterData();
+    try {
+      await editMasterCategory(target, newName);
+      showToast(`Category "${target}" renamed to "${newName}"`);
+    } catch (err) {
+      console.warn('Category edit error:', err);
+    }
+    await loadAllMasterData();
   };
 
   // --- LOCATION HIERARCHY ADD HANDLERS ---
   const handleAddCountrySubmit = async (e) => {
     e.preventDefault();
     if (!newCountryName.trim()) return;
-    await addMasterCountry(newCountryName.trim());
-    showToast(`Country "${newCountryName.trim()}" added to Location Master!`);
+    const country = newCountryName.trim();
     setNewCountryName('');
     setIsAddCountryOpen(false);
-    loadAllMasterData();
+    try {
+      await addMasterCountry(country);
+      showToast(`Country "${country}" added to Location Master!`);
+    } catch (err) {
+      console.warn('Country submit error:', err);
+    }
+    await loadAllMasterData();
   };
 
   const handleAddStateSubmit = async (e) => {
     e.preventDefault();
     if (!addStateTarget || !newStateName.trim()) return;
-    await addMasterState(addStateTarget.countryName, newStateName.trim());
-    showToast(`State "${newStateName.trim()}" added under ${addStateTarget.countryName}!`);
+    const country = addStateTarget.countryName;
+    const state = newStateName.trim();
     setNewStateName('');
     setAddStateTarget(null);
-    loadAllMasterData();
+    try {
+      await addMasterState(country, state);
+      showToast(`State "${state}" added under ${country}!`);
+    } catch (err) {
+      console.warn('State submit error:', err);
+    }
+    await loadAllMasterData();
   };
 
   const handleAddCitySubmit = async (e) => {
     e.preventDefault();
     if (!addCityTarget || !newCityName.trim()) return;
-    await addMasterCity(addCityTarget.countryName, addCityTarget.stateName, newCityName.trim());
-    showToast(`City "${newCityName.trim()}" added under ${addCityTarget.stateName}, ${addCityTarget.countryName}!`);
+    const { countryName, stateName } = addCityTarget;
+    const city = newCityName.trim();
     setNewCityName('');
     setAddCityTarget(null);
-    loadAllMasterData();
+    try {
+      await addMasterCity(countryName, stateName, city);
+      showToast(`City "${city}" added under ${stateName}, ${countryName}!`);
+    } catch (err) {
+      console.warn('City submit error:', err);
+    }
+    await loadAllMasterData();
   };
 
   const handleAddZoneSubmit = async (e) => {
     e.preventDefault();
     if (!addZoneTarget || !newZoneName.trim()) return;
-    await addMasterZone(addZoneTarget.countryName, addZoneTarget.stateName, addZoneTarget.cityName, newZoneName.trim());
-    showToast(`Zone "${newZoneName.trim()}" added under ${addZoneTarget.cityName}, ${addZoneTarget.stateName}!`);
+    const { countryName, stateName, cityName } = addZoneTarget;
+    const zone = newZoneName.trim();
     setNewZoneName('');
     setAddZoneTarget(null);
-    loadAllMasterData();
+    try {
+      await addMasterZone(countryName, stateName, cityName, zone);
+      showToast(`Zone "${zone}" added under ${cityName}, ${stateName}!`);
+    } catch (err) {
+      console.warn('Zone submit error:', err);
+    }
+    await loadAllMasterData();
   };
 
   // --- LOCATION HIERARCHY EDIT HANDLERS ---
   const handleEditCountrySubmit = async (e) => {
     e.preventDefault();
     if (!editingCountryTarget || !editCountryNameInput.trim()) return;
-    await editMasterCountry(editingCountryTarget.countryName, editCountryNameInput.trim());
-    showToast(`Country "${editingCountryTarget.countryName}" renamed to "${editCountryNameInput.trim()}"`);
+    const target = editingCountryTarget.countryName;
+    const newName = editCountryNameInput.trim();
     setEditingCountryTarget(null);
     setEditCountryNameInput('');
-    loadAllMasterData();
+    try {
+      await editMasterCountry(target, newName);
+      showToast(`Country "${target}" renamed to "${newName}"`);
+    } catch (err) {
+      console.warn('Edit country error:', err);
+    }
+    await loadAllMasterData();
   };
 
   const handleEditStateSubmit = async (e) => {
     e.preventDefault();
     if (!editingStateTarget || !editStateNameInput.trim()) return;
-    await editMasterState(editingStateTarget.countryName, editingStateTarget.stateName, editStateNameInput.trim());
-    showToast(`State "${editingStateTarget.stateName}" renamed to "${editStateNameInput.trim()}"`);
+    const { countryName, stateName } = editingStateTarget;
+    const newName = editStateNameInput.trim();
     setEditingStateTarget(null);
     setEditStateNameInput('');
-    loadAllMasterData();
+    try {
+      await editMasterState(countryName, stateName, newName);
+      showToast(`State "${stateName}" renamed to "${newName}"`);
+    } catch (err) {
+      console.warn('Edit state error:', err);
+    }
+    await loadAllMasterData();
   };
 
   const handleEditCitySubmit = async (e) => {
     e.preventDefault();
     if (!editingCityTarget || !editCityNameInput.trim()) return;
-    await editMasterCity(editingCityTarget.countryName, editingCityTarget.stateName, editingCityTarget.cityName, editCityNameInput.trim());
-    showToast(`City "${editingCityTarget.cityName}" renamed to "${editCityNameInput.trim()}"`);
+    const { countryName, stateName, cityName } = editingCityTarget;
+    const newName = editCityNameInput.trim();
     setEditingCityTarget(null);
     setEditCityNameInput('');
-    loadAllMasterData();
+    try {
+      await editMasterCity(countryName, stateName, cityName, newName);
+      showToast(`City "${cityName}" renamed to "${newName}"`);
+    } catch (err) {
+      console.warn('Edit city error:', err);
+    }
+    await loadAllMasterData();
   };
 
   const handleEditZoneSubmit = async (e) => {
     e.preventDefault();
     if (!editingZoneTarget || !editZoneNameInput.trim()) return;
-    await editMasterZone(editingZoneTarget.countryName, editingZoneTarget.stateName, editingZoneTarget.cityName, editingZoneTarget.zoneName, editZoneNameInput.trim());
-    showToast(`Zone "${editingZoneTarget.zoneName}" renamed to "${editZoneNameInput.trim()}"`);
+    const { countryName, stateName, cityName, zoneName } = editingZoneTarget;
+    const newName = editZoneNameInput.trim();
     setEditingZoneTarget(null);
     setEditZoneNameInput('');
-    loadAllMasterData();
+    try {
+      await editMasterZone(countryName, stateName, cityName, zoneName, newName);
+      showToast(`Zone "${zoneName}" renamed to "${newName}"`);
+    } catch (err) {
+      console.warn('Edit zone error:', err);
+    }
+    await loadAllMasterData();
   };
 
   // --- STYLED POPUP CONFIRMED DELETION EXECUTION ---
   const executeDeleteConfirmed = async () => {
     if (!deleteConfirmItem) return;
     const { type, name, countryName, stateName, cityName, zoneName } = deleteConfirmItem;
+    setDeleteConfirmItem(null);
 
-    if (type === 'BRAND') {
-      await deleteMasterBrand(name);
-      showToast(`Brand "${name}" deleted.`);
-    } else if (type === 'CATEGORY') {
-      await deleteMasterCategory(name);
-      showToast(`Category "${name}" deleted.`);
-    } else if (type === 'COUNTRY') {
-      await deleteMasterCountry(countryName);
-      showToast(`Country "${countryName}" deleted.`);
-    } else if (type === 'STATE') {
-      await deleteMasterState(countryName, stateName);
-      showToast(`State "${stateName}" deleted.`);
-    } else if (type === 'CITY') {
-      await deleteMasterCity(countryName, stateName, cityName);
-      showToast(`City "${cityName}" deleted.`);
-    } else if (type === 'ZONE') {
-      await deleteMasterZone(countryName, stateName, cityName, zoneName);
-      showToast(`Zone "${zoneName}" deleted.`);
+    try {
+      if (type === 'BRAND') {
+        await deleteMasterBrand(name);
+        showToast(`Brand "${name}" deleted.`);
+      } else if (type === 'CATEGORY') {
+        await deleteMasterCategory(name);
+        showToast(`Category "${name}" deleted.`);
+      } else if (type === 'COUNTRY') {
+        await deleteMasterCountry(countryName);
+        showToast(`Country "${countryName}" deleted.`);
+      } else if (type === 'STATE') {
+        await deleteMasterState(countryName, stateName);
+        showToast(`State "${stateName}" deleted.`);
+      } else if (type === 'CITY') {
+        await deleteMasterCity(countryName, stateName, cityName);
+        showToast(`City "${cityName}" deleted.`);
+      } else if (type === 'ZONE') {
+        await deleteMasterZone(countryName, stateName, cityName, zoneName);
+        showToast(`Zone "${zoneName}" deleted.`);
+      }
+    } catch (err) {
+      console.warn('Delete item error:', err);
     }
 
-    setDeleteConfirmItem(null);
-    loadAllMasterData();
+    await loadAllMasterData();
   };
 
   return (
