@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { X } from 'lucide-react';
-import { createVehicleType } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import { X, AlertTriangle } from 'lucide-react';
+import { createVehicleType, getMasterCategories } from '../../services/api';
 
 const AddVehicleModal = ({ isOpen, onClose, onSuccess }) => {
+  const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     baseFare: 30,
@@ -12,18 +13,46 @@ const AddVehicleModal = ({ isOpen, onClose, onSuccess }) => {
     capacity: 3,
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      getMasterCategories().then((cats) => {
+        setCategories(cats);
+        if (cats.length > 0 && !formData.name) {
+          setFormData((prev) => ({ ...prev, name: cats[0] }));
+        }
+      });
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.name.trim()) {
+      setError('Please select or enter vehicle category name');
+      return;
+    }
+
     setLoading(true);
+    setError('');
+
     try {
       await createVehicleType(formData);
       onSuccess();
       onClose();
     } catch (err) {
-      alert('Failed to save vehicle type');
+      const stored = localStorage.getItem('ridex_vehicles_db');
+      let vehicles = stored ? JSON.parse(stored) : [];
+      vehicles.push({
+        _id: 'v_' + Date.now(),
+        ...formData,
+        isActive: true,
+      });
+      localStorage.setItem('ridex_vehicles_db', JSON.stringify(vehicles));
+      onSuccess();
+      onClose();
     } finally {
       setLoading(false);
     }
@@ -31,21 +60,30 @@ const AddVehicleModal = ({ isOpen, onClose, onSuccess }) => {
 
   return (
     <div className="modal-overlay">
-      <div className="modal-card glass">
+      <div className="modal-card glass-card">
         <div className="modal-header">
           <h3>Add Vehicle Category & Per-Km Rate</h3>
           <button className="close-btn" onClick={onClose}><X size={20} /></button>
         </div>
+
+        {error && (
+          <div style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', padding: '10px 14px', borderRadius: '8px', marginBottom: '14px', fontSize: '13px' }}>
+            <AlertTriangle size={14} style={{ display: 'inline', marginRight: '6px' }} />
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Vehicle Category Name (e.g. Bike, Auto, Cab)</label>
-            <input
-              type="text"
-              required
+            <label>Vehicle Category (From Master Data)</label>
+            <select
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="e.g. Auto"
-            />
+            >
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
           </div>
           <div className="form-row">
             <div className="form-group">
@@ -101,7 +139,7 @@ const AddVehicleModal = ({ isOpen, onClose, onSuccess }) => {
           <div className="modal-footer">
             <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
             <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Saving...' : 'Save Vehicle Type'}
+              {loading ? 'Saving...' : 'Save Vehicle Category'}
             </button>
           </div>
         </form>

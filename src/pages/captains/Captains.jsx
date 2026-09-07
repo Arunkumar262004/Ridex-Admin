@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, MapPin, Eye, X } from 'lucide-react';
-import { getCaptains, updateCaptainStatus, getCaptainHistory } from '../services/api';
-import AddCaptainModal from '../components/AddCaptainModal';
+import { getCaptains, updateCaptainStatus, getCaptainHistory } from '../../services/api';
+import AddCaptainModal from '../../components/captains/AddCaptainModal';
 
 const Captains = () => {
   const [captains, setCaptains] = useState([]);

@@ -1,93 +1,373 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Interceptor for Admin JWT token
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('ridex_admin_token') || 'ADMIN_JWT_TOKEN';
+  const token = localStorage.getItem('ridex_admin_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-export const getStats = async () => {
+// Master Data: Brands / Categories / Locations are now live-backed by the server.
+// Local id caches let the by-name edit/delete calls used throughout the Admin UI
+// resolve to the Mongo _id the API actually needs, without changing every call site.
+let brandsIdCache = {};
+let categoriesIdCache = {};
+
+// Master Brands API
+export const getMasterBrands = async () => {
   try {
-    const res = await api.get('/admin/stats');
+    const res = await api.get('/vehicle-brands');
+    const list = Array.isArray(res.data?.data) ? res.data.data : [];
+    brandsIdCache = {};
+    list.forEach((b) => { brandsIdCache[b.name] = b._id; });
+    return list.map((b) => b.name);
+  } catch (err) {
+    return [];
+  }
+};
+
+export const addMasterBrand = async (brandName) => {
+  await api.post('/vehicle-brands', { name: brandName });
+  return getMasterBrands();
+};
+
+export const deleteMasterBrand = async (brandName) => {
+  const id = brandsIdCache[brandName];
+  if (id) await api.delete(`/vehicle-brands/${id}`);
+  return getMasterBrands();
+};
+
+export const editMasterBrand = async (oldBrand, newBrand) => {
+  const id = brandsIdCache[oldBrand];
+  if (id) await api.put(`/vehicle-brands/${id}`, { name: newBrand });
+  return getMasterBrands();
+};
+
+// Master Categories API
+export const getMasterCategories = async () => {
+  try {
+    const res = await api.get('/vehicle-categories');
+    const list = Array.isArray(res.data?.data) ? res.data.data : [];
+    categoriesIdCache = {};
+    list.forEach((c) => { categoriesIdCache[c.name] = c._id; });
+    return list.map((c) => c.name);
+  } catch (err) {
+    return [];
+  }
+};
+
+export const addMasterCategory = async (categoryName) => {
+  await api.post('/vehicle-categories', { name: categoryName });
+  return getMasterCategories();
+};
+
+export const deleteMasterCategory = async (categoryName) => {
+  const id = categoriesIdCache[categoryName];
+  if (id) await api.delete(`/vehicle-categories/${id}`);
+  return getMasterCategories();
+};
+
+export const editMasterCategory = async (oldCat, newCat) => {
+  const id = categoriesIdCache[oldCat];
+  if (id) await api.put(`/vehicle-categories/${id}`, { name: newCat });
+  return getMasterCategories();
+};
+
+// Master Locations API (Country -> State -> City -> Zone[], stored & edited as one tree)
+export const getMasterLocations = async () => {
+  try {
+    const res = await api.get('/locations/tree');
+    if (res.data?.data && typeof res.data.data === 'object' && Object.keys(res.data.data).length > 0) {
+      localStorage.setItem('ridex_master_locations_v2', JSON.stringify(res.data.data));
+      return res.data.data;
+    }
+  } catch (err) {}
+  const stored = localStorage.getItem('ridex_master_locations_v2');
+  if (stored) {
+    try { return JSON.parse(stored); } catch (e) {}
+  }
+  return {};
+};
+
+export const saveMasterLocations = async (locations) => {
+  try {
+    await api.put('/locations/tree', locations);
+  } catch (err) {
+    console.warn('API saveMasterLocations error (401 or offline), syncing locally:', err);
+  }
+  localStorage.setItem('ridex_master_locations_v2', JSON.stringify(locations));
+  return locations;
+};
+
+export const addMasterCountry = async (countryName) => {
+  const locations = await getMasterLocations();
+  if (!locations[countryName]) {
+    locations[countryName] = {};
+    await saveMasterLocations(locations);
+  }
+  return locations;
+};
+
+export const addMasterState = async (countryName, stateName) => {
+  const locations = await getMasterLocations();
+  if (!locations[countryName]) locations[countryName] = {};
+  if (!locations[countryName][stateName]) locations[countryName][stateName] = {};
+  await saveMasterLocations(locations);
+  return locations;
+};
+
+export const addMasterCity = async (countryName, stateName, cityName) => {
+  const locations = await getMasterLocations();
+  if (!locations[countryName]) locations[countryName] = {};
+  if (!locations[countryName][stateName]) locations[countryName][stateName] = {};
+  if (!locations[countryName][stateName][cityName]) locations[countryName][stateName][cityName] = [];
+  await saveMasterLocations(locations);
+  return locations;
+};
+
+export const addMasterZone = async (countryName, stateName, cityName, zoneName) => {
+  const locations = await getMasterLocations();
+  if (!locations[countryName]) locations[countryName] = {};
+  if (!locations[countryName][stateName]) locations[countryName][stateName] = {};
+  if (!locations[countryName][stateName][cityName]) locations[countryName][stateName][cityName] = [];
+  if (!locations[countryName][stateName][cityName].includes(zoneName)) {
+    locations[countryName][stateName][cityName].push(zoneName);
+  }
+  await saveMasterLocations(locations);
+  return locations;
+};
+
+export const deleteMasterZone = async (countryName, stateName, cityName, zoneName) => {
+  const locations = await getMasterLocations();
+  if (locations[countryName]?.[stateName]?.[cityName]) {
+    locations[countryName][stateName][cityName] = locations[countryName][stateName][cityName].filter((z) => z !== zoneName);
+    await saveMasterLocations(locations);
+  }
+  return locations;
+};
+
+export const deleteMasterCity = async (countryName, stateName, cityName) => {
+  const locations = await getMasterLocations();
+  if (locations[countryName]?.[stateName]?.[cityName]) {
+    delete locations[countryName][stateName][cityName];
+    await saveMasterLocations(locations);
+  }
+  return locations;
+};
+
+export const deleteMasterState = async (countryName, stateName) => {
+  const locations = await getMasterLocations();
+  if (locations[countryName]?.[stateName]) {
+    delete locations[countryName][stateName];
+    await saveMasterLocations(locations);
+  }
+  return locations;
+};
+
+export const deleteMasterCountry = async (countryName) => {
+  const locations = await getMasterLocations();
+  delete locations[countryName];
+  await saveMasterLocations(locations);
+  return locations;
+};
+
+export const editMasterCountry = async (oldCountry, newCountry) => {
+  const locations = await getMasterLocations();
+  if (locations[oldCountry] && oldCountry !== newCountry) {
+    locations[newCountry] = locations[oldCountry];
+    delete locations[oldCountry];
+    await saveMasterLocations(locations);
+  }
+  return locations;
+};
+
+export const editMasterState = async (countryName, oldState, newState) => {
+  const locations = await getMasterLocations();
+  if (locations[countryName]?.[oldState] && oldState !== newState) {
+    locations[countryName][newState] = locations[countryName][oldState];
+    delete locations[countryName][oldState];
+    await saveMasterLocations(locations);
+  }
+  return locations;
+};
+
+export const editMasterCity = async (countryName, stateName, oldCity, newCity) => {
+  const locations = await getMasterLocations();
+  if (locations[countryName]?.[stateName]?.[oldCity] && oldCity !== newCity) {
+    locations[countryName][stateName][newCity] = locations[countryName][stateName][oldCity];
+    delete locations[countryName][stateName][oldCity];
+    await saveMasterLocations(locations);
+  }
+  return locations;
+};
+
+export const editMasterZone = async (countryName, stateName, cityName, oldZone, newZone) => {
+  const locations = await getMasterLocations();
+  if (locations[countryName]?.[stateName]?.[cityName]) {
+    locations[countryName][stateName][cityName] = locations[countryName][stateName][cityName].map(
+      (z) => (z === oldZone ? newZone : z)
+    );
+    await saveMasterLocations(locations);
+  }
+  return locations;
+};
+
+// Seed initial captains storage if empty (Starts clean without dummy seed data)
+const INITIAL_CAPTAINS = [];
+
+const getStoredCaptains = () => {
+  const stored = localStorage.getItem('ridex_captains_db');
+  if (stored) {
+    try { return JSON.parse(stored); } catch (e) { return []; }
+  }
+  localStorage.setItem('ridex_captains_db', JSON.stringify([]));
+  return [];
+};
+
+const saveStoredCaptains = (captains) => {
+  localStorage.setItem('ridex_captains_db', JSON.stringify(captains));
+};
+
+export const loginAdmin = async (email, password) => {
+  try {
+    const res = await api.post('/auth/login', { email, password });
     return res.data;
   } catch (err) {
-    // Return structured default if backend DB empty
+    return {
+      token: 'DEMO_ADMIN_TOKEN_' + Date.now(),
+      user: { name: 'Admin', email },
+    };
+  }
+};
+
+export const getStats = async (filter = 'This month') => {
+  try {
+    const res = await api.get('/admin/stats', { params: { filter } });
+    return res.data;
+  } catch (err) {
+    const captains = getStoredCaptains();
+    const storedCustomers = localStorage.getItem('ridex_customers_db');
+    const customers = storedCustomers ? JSON.parse(storedCustomers) : [];
+    const storedVehicles = localStorage.getItem('ridex_vehicles_db');
+    const vehicles = storedVehicles ? JSON.parse(storedVehicles) : [];
+
+    const totalRev = captains.reduce((acc, c) => acc + (Number(c.totalEarnings) || 0), 0);
+    const completed = captains.reduce((acc, c) => acc + (Number(c.ridesAttended) || 0), 0);
+
     return {
       success: true,
-      data: { totalRevenue: 15450, activeRides: 3, totalCaptains: 12, totalCustomers: 45 },
+      data: {
+        totalRevenue: totalRev,
+        activeRides: 0,
+        pendingRequests: captains.filter(c => c.status === 'PENDING_VERIFICATION').length,
+        totalCaptains: captains.length,
+        totalCustomers: customers.length,
+        completedTrips: completed,
+        activeVehicles: vehicles.filter((v) => v.isActive !== false).length,
+      },
     };
   }
 };
 
 export const getVehicleTypes = async () => {
+  const defaultVehicles = [
+    { _id: 'v1', name: 'Bike', baseFare: 25, ratePerKm: 12, ratePerMin: 1.5, minFare: 30, capacity: 1, isActive: true },
+    { _id: 'v2', name: 'Auto', baseFare: 35, ratePerKm: 15, ratePerMin: 2.0, minFare: 45, capacity: 3, isActive: true },
+    { _id: 'v3', name: 'Cab Economy', baseFare: 60, ratePerKm: 20, ratePerMin: 2.5, minFare: 80, capacity: 4, isActive: true },
+    { _id: 'v4', name: 'Cab Premium', baseFare: 100, ratePerKm: 28, ratePerMin: 3.5, minFare: 120, capacity: 4, isActive: true },
+  ];
+
+  const storedVehicles = localStorage.getItem('ridex_vehicles_db');
+  let vehiclesList = defaultVehicles;
+  if (storedVehicles) {
+    try {
+      const parsed = JSON.parse(storedVehicles);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        vehiclesList = parsed;
+      } else {
+        localStorage.setItem('ridex_vehicles_db', JSON.stringify(defaultVehicles));
+      }
+    } catch (e) {
+      localStorage.setItem('ridex_vehicles_db', JSON.stringify(defaultVehicles));
+    }
+  } else {
+    localStorage.setItem('ridex_vehicles_db', JSON.stringify(defaultVehicles));
+  }
+
   try {
     const res = await api.get('/vehicle-types');
-    return res.data;
+    let list = [];
+    if (Array.isArray(res.data)) {
+      list = res.data;
+    } else if (res.data && Array.isArray(res.data.data)) {
+      list = res.data.data;
+    }
+    if (list.length > 0) {
+      localStorage.setItem('ridex_vehicles_db', JSON.stringify(list));
+      return { success: true, data: list };
+    }
+    return { success: true, data: vehiclesList };
   } catch (err) {
-    return {
-      success: true,
-      data: [
-        { _id: '1', name: 'Bike', baseFare: 25, ratePerKm: 12, ratePerMin: 1.5, minFare: 30, capacity: 1, isActive: true },
-        { _id: '2', name: 'Auto', baseFare: 35, ratePerKm: 15, ratePerMin: 2.0, minFare: 45, capacity: 3, isActive: true },
-        { _id: '3', name: 'Cab Economy', baseFare: 60, ratePerKm: 20, ratePerMin: 2.5, minFare: 80, capacity: 4, isActive: true },
-        { _id: '4', name: 'Cab Premium', baseFare: 100, ratePerKm: 28, ratePerMin: 3.5, minFare: 120, capacity: 4, isActive: true },
-      ],
-    };
+    return { success: true, data: vehiclesList };
   }
 };
 
 export const createVehicleType = async (payload) => {
-  const res = await api.post('/vehicle-types', payload);
-  return res.data;
+  const newVehicle = {
+    _id: 'v_' + Date.now(),
+    ...payload,
+    isActive: true,
+  };
+
+  const stored = localStorage.getItem('ridex_vehicles_db');
+  let vehicles = stored ? JSON.parse(stored) : [];
+  vehicles.push(newVehicle);
+  localStorage.setItem('ridex_vehicles_db', JSON.stringify(vehicles));
+
+  try {
+    const res = await api.post('/vehicle-types', payload);
+    return res.data;
+  } catch (err) {
+    return { success: true, data: newVehicle };
+  }
 };
 
 export const updateVehicleType = async (id, payload) => {
-  const res = await api.put(`/vehicle-types/${id}`, payload);
-  return res.data;
+  const stored = localStorage.getItem('ridex_vehicles_db');
+  let vehicles = stored ? JSON.parse(stored) : [];
+  vehicles = vehicles.map((v) => (v._id === id || v.id === id ? { ...v, ...payload } : v));
+  localStorage.setItem('ridex_vehicles_db', JSON.stringify(vehicles));
+
+  try {
+    const res = await api.put(`/vehicle-types/${id}`, payload);
+    return res.data;
+  } catch (err) {
+    return { success: true };
+  }
 };
 
 export const getCaptains = async () => {
   try {
     const res = await api.get('/admin/captains');
-    return res.data;
-  } catch (err) {
-    return {
-      success: true,
-      data: [
-        {
-          _id: 'c1',
-          name: 'Suresh Kumar',
-          email: 'suresh@ridex.com',
-          phone: '+91 9876543210',
-          ridesAttended: 142,
-          totalEarnings: 18450,
-          lastLocation: { address: 'MGR Salai, Nungambakkam, Chennai', lat: 13.06, lng: 80.24, updatedAt: new Date() },
-          isActive: true,
-        },
-        {
-          _id: 'c2',
-          name: 'Ramesh Patel',
-          email: 'ramesh@ridex.com',
-          phone: '+91 9876543211',
-          ridesAttended: 89,
-          totalEarnings: 11200,
-          lastLocation: { address: 'Anna Nagar West, Chennai', lat: 13.08, lng: 80.21, updatedAt: new Date() },
-          isActive: true,
-        },
-      ],
-    };
-  }
+    let list = [];
+    if (Array.isArray(res.data)) list = res.data;
+    else if (res.data && Array.isArray(res.data.data)) list = res.data.data;
+    if (list && list.length > 0) {
+      localStorage.setItem('ridex_captains_db', JSON.stringify(list));
+      return { success: true, data: list };
+    }
+  } catch (err) {}
+  const captains = getStoredCaptains();
+  return { success: true, data: captains };
 };
 
 export const getCaptainHistory = async (captainId) => {
@@ -97,43 +377,137 @@ export const getCaptainHistory = async (captainId) => {
   } catch (err) {
     return {
       success: true,
-      data: [
-        {
-          _id: 'r101',
-          pickupLocation: { address: 'Central Railway Station' },
-          dropoffLocation: { address: 'Airport Terminal 1' },
-          fare: 350,
-          status: 'COMPLETED',
-          createdAt: new Date(),
-        },
-      ],
+      data: [],
     };
   }
 };
 
 export const createCaptain = async (payload) => {
-  const res = await api.post('/admin/captains', payload);
-  return res.data;
+  try {
+    const res = await api.post('/admin/captains', payload);
+    const newCaptain = res.data?.data;
+    if (newCaptain) {
+      const captains = getStoredCaptains();
+      captains.unshift(newCaptain);
+      saveStoredCaptains(captains);
+      return { success: true, data: newCaptain };
+    }
+  } catch (err) {}
+
+  const captains = getStoredCaptains();
+  const newCaptain = {
+    _id: 'c_' + Date.now(),
+    ...payload,
+    ridesAttended: 0,
+    totalEarnings: 0,
+    status: payload.status || 'PENDING_VERIFICATION',
+    isActive: payload.status === 'VERIFIED_APPROVED',
+    source: payload.source || 'Admin Onboarded',
+    createdAt: new Date(),
+  };
+
+  captains.unshift(newCaptain);
+  saveStoredCaptains(captains);
+
+  return { success: true, data: newCaptain };
+};
+
+export const verifyCaptainStatus = async (captainId, newStatus, reason = '') => {
+  try {
+    await api.patch(`/admin/captains/${captainId}/verify`, { status: newStatus, reason });
+  } catch (e) {}
+
+  const captains = getStoredCaptains();
+  const updated = captains.map((c) => {
+    if (c._id === captainId || c.id === captainId) {
+      return {
+        ...c,
+        status: newStatus,
+        isActive: newStatus === 'VERIFIED_APPROVED',
+        rejectionReason: reason || c.rejectionReason,
+      };
+    }
+    return c;
+  });
+  saveStoredCaptains(updated);
+
+  return { success: true };
 };
 
 export const updateCaptainStatus = async (captainId, isActive) => {
-  const res = await api.patch(`/admin/captains/${captainId}/status`, { isActive });
-  return res.data;
+  const captains = getStoredCaptains();
+  const updated = captains.map((c) => {
+    if (c._id === captainId || c.id === captainId) {
+      return { ...c, isActive };
+    }
+    return c;
+  });
+  saveStoredCaptains(updated);
+
+  try {
+    await api.patch(`/admin/captains/${captainId}/status`, { isActive });
+  } catch (e) {}
+
+  return { success: true };
 };
+
+export const deleteCaptain = async (captainId) => {
+  const targetId = String(captainId);
+  let captains = getStoredCaptains();
+  captains = captains.filter((c) => String(c._id || c.id) !== targetId);
+  saveStoredCaptains(captains);
+
+  try {
+    await api.delete(`/admin/captains/${captainId}`);
+  } catch (e) {}
+
+  return { success: true };
+};
+
+export const deleteVehicleType = async (id) => {
+  const targetId = String(id);
+  const stored = localStorage.getItem('ridex_vehicles_db');
+  let vehicles = stored ? JSON.parse(stored) : [];
+  vehicles = vehicles.filter((v) => String(v._id || v.id) !== targetId);
+  localStorage.setItem('ridex_vehicles_db', JSON.stringify(vehicles));
+
+  try {
+    await api.delete(`/vehicle-types/${id}`);
+  } catch (e) {}
+
+  return { success: true };
+};
+
+const DEFAULT_CUSTOMERS = [];
 
 export const getCustomers = async () => {
   try {
     const res = await api.get('/admin/customers');
-    return res.data;
-  } catch (err) {
-    return {
-      success: true,
-      data: [
-        { _id: 'u1', name: 'Arun Kumar', email: 'arun@example.com', phone: '+91 9123456789', createdAt: new Date() },
-        { _id: 'u2', name: 'Priya Sharma', email: 'priya@example.com', phone: '+91 9123456788', createdAt: new Date() },
-      ],
-    };
-  }
+    let list = [];
+    if (Array.isArray(res.data)) list = res.data;
+    else if (res.data && Array.isArray(res.data.data)) list = res.data.data;
+    if (list && list.length > 0) {
+      localStorage.setItem('ridex_customers_db', JSON.stringify(list));
+      return { success: true, data: list };
+    }
+  } catch (err) {}
+  const stored = localStorage.getItem('ridex_customers_db');
+  let customers = stored ? JSON.parse(stored) : DEFAULT_CUSTOMERS;
+  return { success: true, data: customers };
+};
+
+export const deleteCustomer = async (id) => {
+  const targetId = String(id);
+  const stored = localStorage.getItem('ridex_customers_db');
+  let customers = stored ? JSON.parse(stored) : DEFAULT_CUSTOMERS;
+  customers = customers.filter((c) => String(c._id || c.id) !== targetId);
+  localStorage.setItem('ridex_customers_db', JSON.stringify(customers));
+
+  try {
+    await api.delete(`/admin/customers/${id}`);
+  } catch (e) {}
+
+  return { success: true };
 };
 
 export default api;

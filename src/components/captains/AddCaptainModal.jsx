@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import { createCaptain } from '../services/api';
+import { createCaptain } from '../../services/api';
 
 const AddCaptainModal = ({ isOpen, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -11,17 +11,20 @@ const AddCaptainModal = ({ isOpen, onClose, onSuccess }) => {
   });
   const [loading, setLoading] = useState(false);
 
+  const [errorMessage, setErrorMessage] = useState('');
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMessage('');
     try {
       await createCaptain(formData);
       onSuccess();
       onClose();
     } catch (err) {
-      alert('Failed to onboard captain');
+      setErrorMessage('Failed to onboard captain. Please try again.');
     } finally {
       setLoading(false);
     }
