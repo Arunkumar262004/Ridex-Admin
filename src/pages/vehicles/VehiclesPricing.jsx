@@ -8,6 +8,8 @@ const VehiclesPricing = () => {
   const [vehicles, setVehicles] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState(null);
+  const [editImageFile, setEditImageFile] = useState(null);
+  const [editImagePreview, setEditImagePreview] = useState(null);
   const [deletingVehicle, setDeletingVehicle] = useState(null);
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 'auto', bottom: 'auto', right: '0px' });
@@ -43,13 +45,28 @@ const VehiclesPricing = () => {
     loadVehicles();
   };
 
+  const closeEditModal = () => {
+    setEditingVehicle(null);
+    setEditImageFile(null);
+    setEditImagePreview(null);
+  };
+
+  const handleEditImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setEditImageFile(file);
+    setEditImagePreview(URL.createObjectURL(file));
+  };
+
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     if (!editingVehicle) return;
 
-    await updateVehicleType(editingVehicle._id || editingVehicle.id, editingVehicle);
+    await updateVehicleType(editingVehicle._id || editingVehicle.id, { ...editingVehicle, imageFile: editImageFile });
     showToast(`Vehicle ${editingVehicle.name} details updated successfully!`);
     setEditingVehicle(null);
+    setEditImageFile(null);
+    setEditImagePreview(null);
     loadVehicles();
   };
 
@@ -76,6 +93,7 @@ const VehiclesPricing = () => {
         <table className="data-table">
           <thead>
             <tr>
+              <th>Photo</th>
               <th>Vehicle Category</th>
               <th>Base Fare (₹)</th>
               <th>Rate / Km (₹/km)</th>
@@ -94,6 +112,19 @@ const VehiclesPricing = () => {
 
               return (
                 <tr key={vehicleId} style={{ position: 'relative', zIndex: isDropdownOpen ? 100 : 1 }}>
+                  <td>
+                    {v.imageUrl ? (
+                      <img
+                        src={v.imageUrl}
+                        alt={v.name}
+                        style={{ width: '44px', height: '44px', objectFit: 'cover', borderRadius: '8px' }}
+                      />
+                    ) : (
+                      <div style={{ width: '44px', height: '44px', borderRadius: '8px', background: 'var(--surface-2, #f0f0f0)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+                        <Car size={18} />
+                      </div>
+                    )}
+                  </td>
                   <td><strong>{v.name}</strong></td>
                   <td>₹{v.baseFare}</td>
                   <td><strong style={{ color: '#FF6600' }}>₹{v.ratePerKm} / km</strong></td>
@@ -144,6 +175,8 @@ const VehiclesPricing = () => {
                             className="dots-dropdown-item"
                             onClick={() => {
                               setEditingVehicle({ ...v });
+                              setEditImageFile(null);
+                              setEditImagePreview(v.imageUrl || null);
                               setOpenDropdownId(null);
                             }}
                           >
@@ -190,7 +223,7 @@ const VehiclesPricing = () => {
                 <div className="modal-header-icon"><Car size={20} /></div>
                 <h3>Edit Vehicle Category & Rates</h3>
               </div>
-              <button className="close-btn" onClick={() => setEditingVehicle(null)}>
+              <button className="close-btn" onClick={closeEditModal}>
                 <X size={18} />
               </button>
             </div>
@@ -203,6 +236,18 @@ const VehiclesPricing = () => {
                   value={editingVehicle.name}
                   onChange={(e) => setEditingVehicle({ ...editingVehicle, name: e.target.value })}
                 />
+              </div>
+
+              <div className="form-group">
+                <label>Vehicle Model Photo</label>
+                <input type="file" accept="image/*" onChange={handleEditImageChange} />
+                {editImagePreview && (
+                  <img
+                    src={editImagePreview}
+                    alt="Vehicle preview"
+                    style={{ marginTop: '8px', width: '100%', maxHeight: '140px', objectFit: 'cover', borderRadius: '8px' }}
+                  />
+                )}
               </div>
 
               <div className="form-row">
@@ -265,14 +310,14 @@ const VehiclesPricing = () => {
                   className="btn btn-danger"
                   onClick={() => {
                     const target = editingVehicle;
-                    setEditingVehicle(null);
+                    closeEditModal();
                     setDeletingVehicle(target);
                   }}
                 >
                   <Trash2 size={14} /> Delete Category
                 </button>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button type="button" className="btn btn-secondary" onClick={() => setEditingVehicle(null)}>
+                  <button type="button" className="btn btn-secondary" onClick={closeEditModal}>
                     Cancel
                   </button>
                   <button type="submit" className="btn btn-primary">

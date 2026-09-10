@@ -12,11 +12,22 @@ const AddVehicleModal = ({ isOpen, onClose, onSuccess }) => {
     minFare: 40,
     capacity: 3,
   });
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
   useEffect(() => {
     if (isOpen) {
+      setImageFile(null);
+      setImagePreview(null);
       getMasterCategories().then((cats) => {
         setCategories(cats);
         if (cats.length > 0 && !formData.name) {
@@ -39,7 +50,9 @@ const AddVehicleModal = ({ isOpen, onClose, onSuccess }) => {
     setError('');
 
     try {
-      await createVehicleType(formData);
+      await createVehicleType({ ...formData, imageFile });
+      setImageFile(null);
+      setImagePreview(null);
       onSuccess();
       onClose();
     } catch (err) {
@@ -51,6 +64,8 @@ const AddVehicleModal = ({ isOpen, onClose, onSuccess }) => {
         isActive: true,
       });
       localStorage.setItem('ridex_vehicles_db', JSON.stringify(vehicles));
+      setImageFile(null);
+      setImagePreview(null);
       onSuccess();
       onClose();
     } finally {
@@ -84,6 +99,17 @@ const AddVehicleModal = ({ isOpen, onClose, onSuccess }) => {
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
+          </div>
+          <div className="form-group">
+            <label>Vehicle Model Photo</label>
+            <input type="file" accept="image/*" onChange={handleImageChange} />
+            {imagePreview && (
+              <img
+                src={imagePreview}
+                alt="Vehicle preview"
+                style={{ marginTop: '8px', width: '100%', maxHeight: '140px', objectFit: 'cover', borderRadius: '8px' }}
+              />
+            )}
           </div>
           <div className="form-row">
             <div className="form-group">

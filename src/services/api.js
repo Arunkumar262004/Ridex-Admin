@@ -13,6 +13,19 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  // The default 'application/json' header above makes axios try to
+  // JSON-serialize any FormData body (e.g. vehicle photo uploads) instead
+  // of sending it as multipart. Clearing it for FormData requests lets
+  // axios pass the body through untouched with the correct boundary.
+  if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+    if (config.headers?.delete) {
+      config.headers.delete('Content-Type');
+    } else if (config.headers) {
+      delete config.headers['Content-Type'];
+    }
+  }
+
   return config;
 });
 
@@ -23,7 +36,7 @@ let brandsIdCache = {};
 let categoriesIdCache = {};
 
 const DEFAULT_BRANDS = ['Honda', 'Hero', 'TVS', 'Bajaj', 'Yamaha', 'Suzuki', 'Royal Enfield', 'Ather', 'Ola Electric', 'KTM', 'Kawasaki'];
-const DEFAULT_CATEGORIES = ['Bike', 'Auto', 'Cab Economy', 'Cab Premium'];
+const DEFAULT_CATEGORIES = ['Bike', 'Auto', 'Cab Economy', 'Cab Premium', 'Premium Auto', 'Premium Car'];
 
 const getStoredBrands = () => {
   const stored = localStorage.getItem('ridex_master_brands_db');
@@ -367,6 +380,8 @@ export const getVehicleTypes = async () => {
     { _id: 'v2', name: 'Auto', baseFare: 35, ratePerKm: 15, ratePerMin: 2.0, minFare: 45, capacity: 3, isActive: true },
     { _id: 'v3', name: 'Cab Economy', baseFare: 60, ratePerKm: 20, ratePerMin: 2.5, minFare: 80, capacity: 4, isActive: true },
     { _id: 'v4', name: 'Cab Premium', baseFare: 100, ratePerKm: 28, ratePerMin: 3.5, minFare: 120, capacity: 4, isActive: true },
+    { _id: 'v5', name: 'Premium Auto', baseFare: 55, ratePerKm: 20, ratePerMin: 2.5, minFare: 70, capacity: 3, isActive: true },
+    { _id: 'v6', name: 'Premium Car', baseFare: 150, ratePerKm: 35, ratePerMin: 4.5, minFare: 170, capacity: 4, isActive: true },
   ];
 
   const storedVehicles = localStorage.getItem('ridex_vehicles_db');
@@ -404,10 +419,24 @@ export const getVehicleTypes = async () => {
   }
 };
 
+// Builds multipart/form-data when a photo file is attached (axios lets the
+// browser set the correct Content-Type + boundary for FormData bodies),
+// otherwise sends a plain JSON-able object.
+const buildVehiclePayload = ({ imageFile, ...fields }) => {
+  if (!imageFile) return fields;
+  const formData = new FormData();
+  Object.entries(fields).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) formData.append(key, value);
+  });
+  formData.append('image', imageFile);
+  return formData;
+};
+
 export const createVehicleType = async (payload) => {
+  const { imageFile, ...fields } = payload;
   const newVehicle = {
     _id: 'v_' + Date.now(),
-    ...payload,
+    ...fields,
     isActive: true,
   };
 
@@ -417,7 +446,7 @@ export const createVehicleType = async (payload) => {
   localStorage.setItem('ridex_vehicles_db', JSON.stringify(vehicles));
 
   try {
-    const res = await api.post('/vehicle-types', payload);
+    const res = await api.post('/vehicle-types', buildVehiclePayload(payload));
     return res.data;
   } catch (err) {
     return { success: true, data: newVehicle };
@@ -425,13 +454,14 @@ export const createVehicleType = async (payload) => {
 };
 
 export const updateVehicleType = async (id, payload) => {
+  const { imageFile, ...fields } = payload;
   const stored = localStorage.getItem('ridex_vehicles_db');
   let vehicles = stored ? JSON.parse(stored) : [];
-  vehicles = vehicles.map((v) => (v._id === id || v.id === id ? { ...v, ...payload } : v));
+  vehicles = vehicles.map((v) => (v._id === id || v.id === id ? { ...v, ...fields } : v));
   localStorage.setItem('ridex_vehicles_db', JSON.stringify(vehicles));
 
   try {
-    const res = await api.put(`/vehicle-types/${id}`, payload);
+    const res = await api.put(`/vehicle-types/${id}`, buildVehiclePayload(payload));
     return res.data;
   } catch (err) {
     return { success: true };

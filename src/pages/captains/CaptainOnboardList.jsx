@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Check, X, Eye, Clock, CheckCircle, Shield, AlertTriangle, MoreHorizontal, Edit, User, Car, MapPin, Trash2 } from 'lucide-react';
+import { Check, X, Eye, Clock, CheckCircle, Shield, AlertTriangle, MoreHorizontal, Edit, User, Car, MapPin, Trash2, FileText } from 'lucide-react';
 import { getCaptains, verifyCaptainStatus, deleteCaptain } from '../../services/api';
 
 const CaptainOnboardList = () => {
@@ -462,6 +462,35 @@ const CaptainOnboardList = () => {
                     <span className="info-label">Source</span>
                     <div className="info-value">{viewingKYC.source || 'App Self Registration'}</div>
                   </div>
+                </div>
+              </div>
+
+              <div className="info-card-block">
+                <div className="info-card-title">
+                  <FileText size={14} /> Submitted Documents
+                </div>
+                <div className="info-grid-row">
+                  {[
+                    { key: 'licenseImage', label: 'Driving License' },
+                    { key: 'rcImage', label: 'Vehicle RC Book' },
+                    { key: 'aadharImage', label: 'Aadhar Card Photo' },
+                    { key: 'insuranceImage', label: 'Vehicle Insurance' },
+                  ].map(({ key, label }) => (
+                    <div key={key}>
+                      <span className="info-label">{label}</span>
+                      {viewingKYC[key] ? (
+                        <a href={viewingKYC[key]} target="_blank" rel="noopener noreferrer">
+                          <img
+                            src={viewingKYC[key]}
+                            alt={label}
+                            style={{ width: '100%', maxWidth: '160px', height: '100px', objectFit: 'cover', borderRadius: '8px', marginTop: '4px' }}
+                          />
+                        </a>
+                      ) : (
+                        <div className="info-value" style={{ color: 'var(--text-muted)' }}>Not submitted</div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
 
