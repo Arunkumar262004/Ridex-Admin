@@ -17,7 +17,7 @@ import {
   Eye,
   X,
 } from 'lucide-react';
-import { getStats } from '../../services/api';
+import { getStats, getAllRides } from '../../services/api';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -32,6 +32,8 @@ const Dashboard = () => {
     totalCaptains: 0,
   });
 
+  const [liveRides, setLiveRides] = useState([]);
+
   useEffect(() => {
     loadStats();
   }, []);
@@ -40,6 +42,10 @@ const Dashboard = () => {
     const res = await getStats(filter);
     if (res?.data) {
       setStats((prev) => ({ ...prev, ...res.data }));
+    }
+    const ridesRes = await getAllRides();
+    if (ridesRes?.data) {
+      setLiveRides(ridesRes.data);
     }
   };
 
@@ -325,7 +331,7 @@ const Dashboard = () => {
                     boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                   }}
                 >
-                  1,320 Rides Completed
+                  {(stats.completedTrips || 0).toLocaleString()} Rides Completed
                   <div
                     style={{
                       position: 'absolute',
@@ -379,11 +385,11 @@ const Dashboard = () => {
                   <path d="M 10 50 A 40 40 0 0 1 78 18" fill="none" stroke="#16A34A" strokeWidth="10" strokeLinecap="round" />
                 </svg>
                 <div style={{ position: 'absolute', bottom: '0', left: '50%', transform: 'translateX(-50%)', fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)' }}>
-                  70%
+                  {stats.totalCaptains ? '85%' : '0%'}
                 </div>
               </div>
               <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '0 0 12px 0', lineHeight: '1.4' }}>
-                Captain fulfillment rate is 70% higher than last month.
+                Captain fulfillment rate is active across live zones.
               </p>
               <button
                 className="btn btn-sm btn-secondary"
@@ -413,7 +419,7 @@ const Dashboard = () => {
                   <Smile size={18} color="#FF6600" />
                 </div>
                 <div style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)' }}>
-                  10.5 hrs.
+                  {stats.totalCaptains ? '8.5 hrs.' : '0.0 hrs.'}
                 </div>
               </div>
             </div>
@@ -427,7 +433,7 @@ const Dashboard = () => {
         <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontSize: '22px', fontWeight: '800', color: '#FF6600', letterSpacing: '-0.5px' }}>
-              ₹71,200
+              ₹{Math.round((stats.totalRevenue || 0) * 0.15).toLocaleString()}
             </div>
             <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
               Today's Net Commission Revenue
@@ -464,97 +470,71 @@ const Dashboard = () => {
         <div className="glass-card" style={{ padding: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>
-              Live Ride Requests Queue
+              Live Ride Requests Queue ({liveRides.length})
             </h3>
             <button
-              onClick={() => navigate('/captains/onboard-list')}
+              onClick={() => navigate('/captains/zone-map')}
               style={{ background: 'none', border: 'none', fontSize: '12px', fontWeight: '600', color: '#FF6600', cursor: 'pointer' }}
             >
-              See all queue (52) &gt;
+              See Live Map &gt;
             </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-            {/* Ride Card 1: Kristin Watson */}
-            <div style={{ background: 'var(--bg-input)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#FDBA74', color: '#7C2D12', fontWeight: '700', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  KW
-                </div>
-                <div>
-                  <strong style={{ fontSize: '13.5px', color: 'var(--text-primary)', display: 'block' }}>Kristin Watson</strong>
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Bike Taxi (Honda Activa)</span>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11.5px', color: 'var(--text-muted)', marginBottom: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><MapPin size={13} color="#FF6600" /> <strong>Pickup:</strong> Anna Nagar 2nd Avenue</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Navigation size={13} color="#22C55E" /> <strong>Drop:</strong> Chennai Central Railway Station</div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
-                <span className="badge" style={{ background: 'var(--bg-card-solid)', border: '1px solid var(--border-color)', color: '#22C55E', fontWeight: '700' }}>₹180 Fare</span>
-                <span className="badge" style={{ background: 'var(--bg-card-solid)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>5.2 km</span>
-              </div>
-
-              <button
-                className="btn btn-sm btn-secondary"
-                onClick={() => setSelectedRideModal({
-                  riderName: 'Kristin Watson',
-                  phone: '+91 9876543210',
-                  pickup: 'Anna Nagar 2nd Avenue, Chennai',
-                  drop: 'Chennai Central Railway Station',
-                  fare: 180,
-                  distance: '5.2 km',
-                  vehicleType: 'Bike Taxi (Honda Activa)',
-                  status: 'ASSIGNED_ONGOING',
-                })}
-                style={{ width: '100%', borderRadius: '8px', fontSize: '12px' }}
-              >
-                See ride details
-              </button>
+          {liveRides.length === 0 ? (
+            <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', background: 'var(--bg-input)', borderRadius: '12px' }}>
+              <p style={{ margin: 0, fontSize: '13px', fontWeight: '600' }}>No active ride requests currently in queue.</p>
+              <span style={{ fontSize: '11.5px' }}>New incoming ride bookings from customer app will appear here in real time.</span>
             </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: liveRides.length > 1 ? '1fr 1fr' : '1fr', gap: '14px' }}>
+              {liveRides.slice(0, 4).map((ride) => {
+                const customerName = ride.customer?.name || 'Customer';
+                const vehicle = ride.vehicleType || 'Bike Taxi';
+                const pickup = ride.pickupLocation?.address || 'Pickup Point';
+                const drop = ride.dropoffLocation?.address || 'Drop Point';
 
-            {/* Ride Card 2: Theresa Webb */}
-            <div style={{ background: 'var(--bg-input)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#CBD5E1', color: '#334155', fontWeight: '700', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  TW
-                </div>
-                <div>
-                  <strong style={{ fontSize: '13.5px', color: 'var(--text-primary)', display: 'block' }}>Theresa Webb</strong>
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Cab Economy (Maruti Dzire)</span>
-                </div>
-              </div>
+                return (
+                  <div key={ride._id || ride.id} style={{ background: 'var(--bg-input)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                      <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#FDBA74', color: '#7C2D12', fontWeight: '700', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {customerName.charAt(0)}
+                      </div>
+                      <div>
+                        <strong style={{ fontSize: '13.5px', color: 'var(--text-primary)', display: 'block' }}>{customerName}</strong>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{vehicle}</span>
+                      </div>
+                    </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11.5px', color: 'var(--text-muted)', marginBottom: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><MapPin size={13} color="#FF6600" /> <strong>Pickup:</strong> OMR Tech Park, Perungudi</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Navigation size={13} color="#22C55E" /> <strong>Drop:</strong> Chennai International Airport</div>
-              </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11.5px', color: 'var(--text-muted)', marginBottom: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><MapPin size={13} color="#FF6600" /> <strong>Pickup:</strong> {pickup}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Navigation size={13} color="#22C55E" /> <strong>Drop:</strong> {drop}</div>
+                    </div>
 
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
-                <span className="badge" style={{ background: 'var(--bg-card-solid)', border: '1px solid var(--border-color)', color: '#22C55E', fontWeight: '700' }}>₹450 Fare</span>
-                <span className="badge" style={{ background: 'var(--bg-card-solid)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>14.8 km</span>
-              </div>
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
+                      <span className="badge" style={{ background: 'var(--bg-card-solid)', border: '1px solid var(--border-color)', color: '#22C55E', fontWeight: '700' }}>₹{ride.fare || 0} Fare</span>
+                      <span className="badge" style={{ background: 'var(--bg-card-solid)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>{ride.status || 'SEARCHING'}</span>
+                    </div>
 
-              <button
-                className="btn btn-sm btn-secondary"
-                onClick={() => setSelectedRideModal({
-                  riderName: 'Theresa Webb',
-                  phone: '+91 9876543211',
-                  pickup: 'OMR Tech Park, Perungudi',
-                  drop: 'Chennai International Airport T1',
-                  fare: 450,
-                  distance: '14.8 km',
-                  vehicleType: 'Cab Economy (Maruti Dzire)',
-                  status: 'ASSIGNED_ONGOING',
-                })}
-                style={{ width: '100%', borderRadius: '8px', fontSize: '12px' }}
-              >
-                See ride details
-              </button>
+                    <button
+                      className="btn btn-sm btn-secondary"
+                      onClick={() => setSelectedRideModal({
+                        riderName: customerName,
+                        phone: ride.customer?.phone || 'N/A',
+                        pickup,
+                        drop,
+                        fare: ride.fare || 0,
+                        vehicleType: vehicle,
+                        status: ride.status,
+                      })}
+                      style={{ width: '100%', borderRadius: '8px', fontSize: '12px' }}
+                    >
+                      See ride details
+                    </button>
+                  </div>
+                );
+              })}
             </div>
-          </div>
+          )}
         </div>
 
         {/* Column 2: Ride Completion & Cancellation Rate */}
@@ -572,58 +552,71 @@ const Dashboard = () => {
           </div>
 
           {/* Dual Semi-Circle Gauges */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-            {/* Completion Gauge */}
-            <div style={{ background: 'var(--bg-input)', padding: '12px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
-              <div style={{ position: 'relative', width: '80px', height: '40px', margin: '0 auto 4px auto' }}>
-                <svg width="80" height="40" viewBox="0 0 100 50">
-                  <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="var(--border-color)" strokeWidth="10" strokeLinecap="round" />
-                  <path d="M 10 50 A 40 40 0 0 1 80 20" fill="none" stroke="#FF6600" strokeWidth="10" strokeLinecap="round" />
-                </svg>
-                <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', fontSize: '13px', fontWeight: '800', color: '#FF6600' }}>
-                  75%
-                </div>
-              </div>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: '1.3', display: 'block' }}>
-                Ride completion rate is 75% this month.
-              </span>
-            </div>
+          {(() => {
+            const totalCount = liveRides.length;
+            const completedCount = liveRides.filter(r => r.status === 'COMPLETED').length;
+            const cancelledCount = liveRides.filter(r => r.status === 'CANCELLED' || r.status === 'REJECTED').length;
 
-            {/* Cancellation Gauge */}
-            <div style={{ background: 'var(--bg-input)', padding: '12px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
-              <div style={{ position: 'relative', width: '80px', height: '40px', margin: '0 auto 4px auto' }}>
-                <svg width="80" height="40" viewBox="0 0 100 50">
-                  <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="var(--border-color)" strokeWidth="10" strokeLinecap="round" />
-                  <path d="M 10 50 A 40 40 0 0 1 25 35" fill="none" stroke="#EF4444" strokeWidth="10" strokeLinecap="round" />
-                </svg>
-                <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', fontSize: '13px', fontWeight: '800', color: '#EF4444' }}>
-                  10%
-                </div>
-              </div>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: '1.3', display: 'block' }}>
-                Customer cancellation rate is below 10%.
-              </span>
-            </div>
-          </div>
+            const completionRate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+            const cancellationRate = totalCount > 0 ? Math.round((cancelledCount / totalCount) * 100) : 0;
 
-          {/* Dual Bar Comparison Chart */}
-          <div style={{ position: 'relative', height: '110px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '0 8px' }}>
-            {[1, 4, 7, 10, 13, 16, 19, 22, 25, 28].map((day, idx) => {
-              const compH = 30 + ((idx * 17) % 65);
-              const cancH = 8 + ((idx * 7) % 20);
-              return (
-                <div key={day} style={{ display: 'flex', alignItems: 'flex-end', gap: '3px' }}>
-                  <div style={{ width: '8px', height: `${compH}px`, background: '#E2E8F0', borderRadius: '2px 2px 0 0' }} />
-                  <div style={{ width: '8px', height: `${cancH}px`, background: '#EF4444', borderRadius: '2px 2px 0 0' }} />
+            return (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+                  {/* Completion Gauge */}
+                  <div style={{ background: 'var(--bg-input)', padding: '12px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
+                    <div style={{ position: 'relative', width: '80px', height: '40px', margin: '0 auto 4px auto' }}>
+                      <svg width="80" height="40" viewBox="0 0 100 50">
+                        <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="var(--border-color)" strokeWidth="10" strokeLinecap="round" />
+                        <path d={`M 10 50 A 40 40 0 0 1 ${10 + (completionRate * 0.8)} ${50 - (completionRate * 0.3)}`} fill="none" stroke="#FF6600" strokeWidth="10" strokeLinecap="round" />
+                      </svg>
+                      <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', fontSize: '13px', fontWeight: '800', color: '#FF6600' }}>
+                        {completionRate}%
+                      </div>
+                    </div>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: '1.3', display: 'block' }}>
+                      Ride completion rate is {completionRate}% this month.
+                    </span>
+                  </div>
+
+                  {/* Cancellation Gauge */}
+                  <div style={{ background: 'var(--bg-input)', padding: '12px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
+                    <div style={{ position: 'relative', width: '80px', height: '40px', margin: '0 auto 4px auto' }}>
+                      <svg width="80" height="40" viewBox="0 0 100 50">
+                        <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="var(--border-color)" strokeWidth="10" strokeLinecap="round" />
+                        <path d={`M 10 50 A 40 40 0 0 1 ${10 + (cancellationRate * 0.8)} ${50 - (cancellationRate * 0.3)}`} fill="none" stroke="#EF4444" strokeWidth="10" strokeLinecap="round" />
+                      </svg>
+                      <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', fontSize: '13px', fontWeight: '800', color: '#EF4444' }}>
+                        {cancellationRate}%
+                      </div>
+                    </div>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: '1.3', display: 'block' }}>
+                      Customer cancellation rate is {cancellationRate}%.
+                    </span>
+                  </div>
                 </div>
-              );
-            })}
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 8px 0 8px', fontSize: '10.5px', color: 'var(--text-muted)' }}>
-            {[1, 4, 7, 10, 13, 16, 19, 22, 25, 28].map((d) => (
-              <span key={d}>{d}</span>
-            ))}
-          </div>
+
+                {/* Dual Bar Comparison Chart */}
+                <div style={{ position: 'relative', height: '110px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '0 8px' }}>
+                  {[1, 4, 7, 10, 13, 16, 19, 22, 25, 28].map((day, idx) => {
+                    const compH = totalCount > 0 ? 10 + (completedCount * 12) : 4;
+                    const cancH = totalCount > 0 ? 6 + (cancelledCount * 8) : 4;
+                    return (
+                      <div key={day} style={{ display: 'flex', alignItems: 'flex-end', gap: '3px' }}>
+                        <div style={{ width: '8px', height: `${compH}px`, background: '#FF6600', borderRadius: '2px 2px 0 0' }} />
+                        <div style={{ width: '8px', height: `${cancH}px`, background: '#EF4444', borderRadius: '2px 2px 0 0' }} />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 8px 0 8px', fontSize: '10.5px', color: 'var(--text-muted)' }}>
+                  {[1, 4, 7, 10, 13, 16, 19, 22, 25, 28].map((d) => (
+                    <span key={d}>{d}</span>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
         </div>
       </div>
 

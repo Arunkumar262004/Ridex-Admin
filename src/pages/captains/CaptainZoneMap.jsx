@@ -1,17 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Search, Phone, CheckCircle, Navigation, RefreshCw, X, Globe, Star } from 'lucide-react';
-import { getMasterLocations } from '../../services/api';
-
-const CAPTAIN_PINS = [
-  { id: 'p1', name: 'Suresh Kumar', phone: '+91 9876543210', vehicle: 'Honda Activa (Non-Gear)', country: 'India', state: 'Tamil Nadu', city: 'Chennai', zone: 'Anna Nagar', status: 'Available', lat: 35, lng: 42, battery: '92%', rating: '4.9' },
-  { id: 'p2', name: 'Ramesh Patel', phone: '+91 9876543211', vehicle: 'Hero Splendor (Gear)', country: 'India', state: 'Tamil Nadu', city: 'Chennai', zone: 'Anna Nagar', status: 'On Ride', lat: 55, lng: 60, battery: '85%', rating: '4.8' },
-  { id: 'p3', name: 'Anand Sharma', phone: '+91 9876543212', vehicle: 'TVS Jupiter (Non-Gear)', country: 'India', state: 'Tamil Nadu', city: 'Chennai', zone: 'Anna Nagar', status: 'Available', lat: 25, lng: 70, battery: '78%', rating: '4.7' },
-  { id: 'p4', name: 'Dinesh Kumar', phone: '+91 9876543213', vehicle: 'Bajaj Pulsar (Gear)', country: 'India', state: 'Tamil Nadu', city: 'Chennai', zone: 'Anna Nagar', status: 'Busy', lat: 70, lng: 30, battery: '95%', rating: '4.9' },
-  { id: 'p5', name: 'Vikram Singh', phone: '+91 9123456780', vehicle: 'Honda Shine (Gear)', country: 'India', state: 'Maharashtra', city: 'Mumbai', zone: 'Bandra West', status: 'Available', lat: 40, lng: 50, battery: '88%', rating: '4.8' },
-];
+import { getMasterLocations, getCaptains } from '../../services/api';
 
 const CaptainZoneMap = () => {
   const [masterLocations, setMasterLocations] = useState({});
+  const [captainPins, setCaptainPins] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState('India');
   const [selectedState, setSelectedState] = useState('Tamil Nadu');
   const [selectedCity, setSelectedCity] = useState('Chennai');
@@ -24,7 +17,30 @@ const CaptainZoneMap = () => {
 
   useEffect(() => {
     loadMasterLocations();
+    loadCaptains();
   }, []);
+
+  const loadCaptains = async () => {
+    const res = await getCaptains();
+    if (res?.success && Array.isArray(res.data)) {
+      const pins = res.data.map((c, index) => ({
+        id: c._id || c.id || `c_${index}`,
+        name: c.name || 'Captain',
+        phone: c.phone || 'N/A',
+        vehicle: `${c.vehicleBrand || 'Vehicle'} ${c.vehicleModel || ''} (${c.vehicleNo || 'Registered'})`,
+        country: c.country || 'India',
+        state: c.state || 'Tamil Nadu',
+        city: c.city || 'Chennai',
+        zone: c.zone || 'Anna Nagar',
+        status: c.isActive ? 'Available' : 'Offline',
+        lat: c.lastLocation?.lat || (25 + (index * 15) % 50),
+        lng: c.lastLocation?.lng || (30 + (index * 12) % 40),
+        battery: '95%',
+        rating: '4.8',
+      }));
+      setCaptainPins(pins);
+    }
+  };
 
   const loadMasterLocations = async () => {
     const locs = await getMasterLocations();
@@ -87,7 +103,7 @@ const CaptainZoneMap = () => {
     setSelectedZone(zones[0] || '');
   };
 
-  const filteredCaptains = CAPTAIN_PINS.filter((c) => {
+  const filteredCaptains = captainPins.filter((c) => {
     const matchesLocation =
       (c.country === selectedCountry || !c.country) &&
       c.state === selectedState &&

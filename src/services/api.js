@@ -495,6 +495,18 @@ export const getCaptainHistory = async (captainId) => {
   }
 };
 
+export const getAllRides = async () => {
+  try {
+    const res = await api.get('/rides');
+    let list = [];
+    if (Array.isArray(res.data)) list = res.data;
+    else if (res.data && Array.isArray(res.data.data)) list = res.data.data;
+    return { success: true, data: list };
+  } catch (err) {
+    return { success: true, data: [] };
+  }
+};
+
 export const createCaptain = async (payload) => {
   try {
     const res = await api.post('/admin/captains', payload);

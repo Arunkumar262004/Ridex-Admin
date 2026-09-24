@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Search,
   Sun,
@@ -40,10 +40,12 @@ const SEARCHABLE_ROUTES = [
 
 const Header = ({ title }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { theme, toggleTheme } = useTheme();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const isOnDashboard = location.pathname === '/';
 
   // Global Search State
   const [searchQuery, setSearchQuery] = useState('');
@@ -89,10 +91,10 @@ const Header = ({ title }) => {
     <header className="top-header">
       <div className="header-title-box">
         <h1>{title}</h1>
-        <p>Welcome back, Admin! Here's what's happening today.</p>
       </div>
 
-      {/* Global Interactive Route Search Bar */}
+      {/* Global Interactive Route Search Bar - Dashboard Only */}
+      {isOnDashboard && (
       <div className="header-search" ref={searchContainerRef} style={{ position: 'relative', width: '280px' }}>
         <Search size={15} className="header-search-icon" />
         <input
@@ -113,6 +115,7 @@ const Header = ({ title }) => {
             onClick={() => setSearchQuery('')}
           />
         )}
+
 
         {/* Global Search Results Dropdown Menu */}
         {isSearchOpen && (
@@ -198,6 +201,7 @@ const Header = ({ title }) => {
           </div>
         )}
       </div>
+      )}
 
       <div className="header-actions">
         {/* Dark / Light Theme Mode Toggle */}

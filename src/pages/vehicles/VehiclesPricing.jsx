@@ -72,21 +72,10 @@ const VehiclesPricing = () => {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-          Configure base fares, minimum fare guarantees, and per-kilometer rates for all vehicle types.
-        </span>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <Link to="/master-data/brands" className="btn btn-secondary" style={{ fontSize: '12px', padding: '6px 12px' }}>
-            <Car size={14} /> Master Brands
-          </Link>
-          <Link to="/master-data/categories" className="btn btn-secondary" style={{ fontSize: '12px', padding: '6px 12px' }}>
-            <Layers size={14} /> Master Categories
-          </Link>
-          <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
-            <Plus size={16} /> Add Vehicle Category
-          </button>
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '16px' }}>
+        <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
+          <Plus size={16} /> Add Vehicle Category
+        </button>
       </div>
 
       <div className="table-card glass-card">
@@ -321,7 +310,7 @@ const VehiclesPricing = () => {
                     Cancel
                   </button>
                   <button type="submit" className="btn btn-primary">
-                    Save Pricing Fares
+                    Update
                   </button>
                 </div>
               </div>

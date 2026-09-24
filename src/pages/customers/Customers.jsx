@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getCustomers, deleteCustomer } from '../../services/api';
-import { Trash2 } from 'lucide-react';
+import { Trash2, CheckCircle } from 'lucide-react';
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
@@ -33,13 +33,6 @@ const Customers = () => {
 
   return (
     <div>
-      <div className="section-header">
-        <div>
-          <h2>Registered Customers Directory</h2>
-          <p className="subtitle">View and manage all registered rider accounts on the platform.</p>
-        </div>
-      </div>
-
       <div className="table-card glass-card">
         <table className="data-table">
           <thead>
@@ -100,7 +93,9 @@ const Customers = () => {
 
       {toastMessage && (
         <div className="toast-container">
-          <div className="toast-message">{toastMessage}</div>
+          <div className="toast success">
+            <CheckCircle size={16} /> {toastMessage}
+          </div>
         </div>
       )}
     </div>
