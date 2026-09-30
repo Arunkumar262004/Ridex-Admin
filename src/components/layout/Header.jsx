@@ -174,8 +174,8 @@ const Header = ({ title }) => {
                           width: '28px',
                           height: '28px',
                           borderRadius: '8px',
-                          background: 'rgba(255, 102, 0, 0.12)',
-                          color: '#FF6600',
+                          background: 'rgba(255, 99, 71, 0.12)',
+                          color: '#FF6347',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -193,7 +193,7 @@ const Header = ({ title }) => {
                         </span>
                       </div>
                     </div>
-                    <ArrowRight size={14} color="#FF6600" />
+                    <ArrowRight size={14} color="#FF6347" />
                   </button>
                 );
               })
@@ -210,7 +210,7 @@ const Header = ({ title }) => {
           onClick={toggleTheme}
           title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
         >
-          {theme === 'dark' ? <Sun size={18} color="#FFB800" /> : <Moon size={18} color="#FF6600" />}
+          {theme === 'dark' ? <Sun size={18} color="#FFB800" /> : <Moon size={18} color="#FF6347" />}
         </button>
 
         {/* Notifications Icon */}
@@ -249,14 +249,14 @@ const Header = ({ title }) => {
                 width: '28px',
                 height: '28px',
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #FF6600, #FF8800)',
+                background: 'linear-gradient(135deg, #FF6347, #FF7F59)',
                 color: '#FFF',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: '700',
                 fontSize: '12px',
-                boxShadow: '0 2px 8px rgba(255, 102, 0, 0.35)',
+                boxShadow: '0 2px 8px rgba(255, 99, 71, 0.35)',
               }}
             >
               A
@@ -306,7 +306,7 @@ const Header = ({ title }) => {
                   navigate('/profile');
                 }}
               >
-                <User size={14} color="#FF6600" />
+                <User size={14} color="#FF6347" />
                 <span>Profile Info</span>
               </button>
 

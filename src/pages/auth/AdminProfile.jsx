@@ -17,8 +17,8 @@ const AdminProfile = () => {
           justifyContent: 'space-between',
           alignItems: 'center',
           padding: '24px 28px',
-          background: 'linear-gradient(135deg, var(--bg-card-solid), rgba(255, 102, 0, 0.08))',
-          borderLeft: '4px solid #FF6600',
+          background: 'linear-gradient(135deg, var(--bg-card-solid), rgba(255, 99, 71, 0.08))',
+          borderLeft: '4px solid #FF6347',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
@@ -32,8 +32,8 @@ const AdminProfile = () => {
               alignItems: 'center',
               justifyContent: 'center',
               padding: '6px',
-              boxShadow: '0 8px 24px rgba(255, 102, 0, 0.25)',
-              border: '2px solid rgba(255, 102, 0, 0.3)',
+              boxShadow: '0 8px 24px rgba(255, 99, 71, 0.25)',
+              border: '2px solid rgba(255, 99, 71, 0.3)',
             }}
           >
             <img src={ridexLogo} alt="Ridex Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
@@ -79,7 +79,7 @@ const AdminProfile = () => {
 
               <div className="info-card-block">
                 <span className="info-label">Official Email Address</span>
-                <div className="info-value" style={{ fontSize: '14px', color: '#FF6600' }}>
+                <div className="info-value" style={{ fontSize: '14px', color: '#FF6347' }}>
                   {adminUser.email || 'admin@ridex.com'}
                 </div>
               </div>

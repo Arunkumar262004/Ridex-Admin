@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, MapPin, UserCheck, UserPlus, Car, Users, ChevronDown, ChevronRight, Menu, Database, Globe, Layers } from 'lucide-react';
+import { LayoutDashboard, MapPin, UserCheck, UserPlus, Car, Users, ChevronDown, ChevronRight, Menu, Database, Globe, Layers, MessageCircle } from 'lucide-react';
 import ridexLogo from '../../assets/logo/Ridexadmin.png';
 
 const Sidebar = ({ isCollapsed, onToggleSidebar }) => {
@@ -103,6 +103,16 @@ const Sidebar = ({ isCollapsed, onToggleSidebar }) => {
             <Users size={18} />
             <span className="nav-text">Customers</span>
           </div>
+        </NavLink>
+
+        <div className="nav-group-title">Support & Messaging</div>
+
+        <NavLink to="/support" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+          <div className="nav-item-content">
+            <MessageCircle size={18} />
+            <span className="nav-text">Support Chats</span>
+          </div>
+          <span className="nav-badge" style={{ background: '#FF6347', minWidth: '20px' }}>3</span>
         </NavLink>
 
         {/* SYSTEM & MASTERS */}

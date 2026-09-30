@@ -402,7 +402,7 @@ const CaptainCreation = () => {
                               setOpenDropdownId(null);
                             }}
                           >
-                            <Eye size={14} color="#FF6600" /> View Full KYC Details
+                            <Eye size={14} color="#FF6347" /> View Full KYC Details
                           </button>
 
                           <button
@@ -623,7 +623,7 @@ const CaptainCreation = () => {
                         onClick={() => setFormData({ ...formData, isGear: false })}
                       >
                         <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <Bike size={16} color="#FF6600" /> Non-Gear (Scooter / Automatic)
+                          <Bike size={16} color="#FF6347" /> Non-Gear (Scooter / Automatic)
                         </span>
                       </div>
                       <div
@@ -631,7 +631,7 @@ const CaptainCreation = () => {
                         onClick={() => setFormData({ ...formData, isGear: true })}
                       >
                         <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <Car size={16} color="#FF6600" /> Gear (Manual Motorcycle / Car)
+                          <Car size={16} color="#FF6347" /> Gear (Manual Motorcycle / Car)
                         </span>
                       </div>
                     </div>
@@ -885,7 +885,7 @@ const CaptainCreation = () => {
                   </div>
                   <div>
                     <span className="info-label">12-Digit Unmasked Aadhar</span>
-                    <div className="info-value" style={{ color: '#FF6600', fontFamily: 'monospace', letterSpacing: '1px' }}>
+                    <div className="info-value" style={{ color: '#FF6347', fontFamily: 'monospace', letterSpacing: '1px' }}>
                       {viewingKYC.aadharNo
                         ? `${viewingKYC.aadharNo.slice(0, 4)} ${viewingKYC.aadharNo.slice(4, 8)} ${viewingKYC.aadharNo.slice(8, 12)}`
                         : 'Not provided'}

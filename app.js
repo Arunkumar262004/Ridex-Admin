@@ -288,24 +288,13 @@ function renderCustomersTable(customers) {
 
 // Fallback Mock Data
 function getFallbackVehicles() {
-  return [
-    { _id: '1', name: 'Bike', baseFare: 25, ratePerKm: 12, ratePerMin: 1.5, minFare: 30, capacity: 1, isActive: true },
-    { _id: '2', name: 'Auto', baseFare: 35, ratePerKm: 15, ratePerMin: 2.0, minFare: 45, capacity: 3, isActive: true },
-    { _id: '3', name: 'Cab Economy', baseFare: 60, ratePerKm: 20, ratePerMin: 2.5, minFare: 80, capacity: 4, isActive: true },
-    { _id: '4', name: 'Cab Premium', baseFare: 100, ratePerKm: 28, ratePerMin: 3.5, minFare: 120, capacity: 4, isActive: true },
-  ];
+  return [];
 }
 
 function getFallbackCaptains() {
-  return [
-    { _id: 'c1', name: 'Suresh Kumar', email: 'suresh@ridex.com', phone: '+91 9876543210', createdAt: new Date(), isActive: true },
-    { _id: 'c2', name: 'Ramesh Patel', email: 'ramesh@ridex.com', phone: '+91 9876543211', createdAt: new Date(), isActive: true },
-  ];
+  return [];
 }
 
 function getFallbackCustomers() {
-  return [
-    { _id: 'u1', name: 'Arun Kumar', email: 'arun@example.com', phone: '+91 9123456789', createdAt: new Date() },
-    { _id: 'u2', name: 'Priya Sharma', email: 'priya@example.com', phone: '+91 9123456788', createdAt: new Date() },
-  ];
+  return [];
 }

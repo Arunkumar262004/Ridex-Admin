@@ -71,15 +71,15 @@ const AdminLogin = () => {
     <div className="huddle-login-wrapper">
       {/* Top Left Brand Logo (Huddle Style) */}
       <div className="huddle-brand-top">
-        <div style={{ width: '40px', height: '40px', background: '#FFFFFF', padding: '4px', borderRadius: '10px', boxShadow: '0 4px 12px rgba(255, 102, 0, 0.25)', border: '1px solid rgba(255, 102, 0, 0.3)' }}>
+        <div style={{ width: '40px', height: '40px', background: '#FFFFFF', padding: '4px', borderRadius: '10px', boxShadow: '0 4px 12px rgba(255, 99, 71, 0.25)', border: '1px solid rgba(255, 99, 71, 0.3)' }}>
           <img src={ridexLogo} alt="Ridex Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
-        <h2>Ride<span style={{ color: '#FF6600' }}>x</span> Admin</h2>
+        <h2>Ride<span style={{ color: '#FF6347' }}>x</span> Admin</h2>
       </div>
 
       {/* Floating Centered Login Card */}
       <div className="huddle-login-card">
-        <div style={{ width: '70px', height: '70px', margin: '0 auto 16px auto', background: '#FFFFFF', padding: '6px', borderRadius: '16px', boxShadow: '0 8px 24px rgba(255, 102, 0, 0.25)', border: '2px solid rgba(255, 102, 0, 0.3)' }}>
+        <div style={{ width: '70px', height: '70px', margin: '0 auto 16px auto', background: '#FFFFFF', padding: '6px', borderRadius: '16px', boxShadow: '0 8px 24px rgba(255, 99, 71, 0.25)', border: '2px solid rgba(255, 99, 71, 0.3)' }}>
           <img src={ridexLogo} alt="Ridex Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
         <h2>Admin Login</h2>
@@ -146,7 +146,7 @@ const AdminLogin = () => {
       <svg className="huddle-bg-illustration" viewBox="0 0 1440 320" fill="none">
         <path
           d="M0,192L48,208C96,224,192,256,288,245.3C384,235,480,181,576,181.3C672,181,768,235,864,245.3C960,256,1056,224,1152,197.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
-          fill="rgba(255, 102, 0, 0.10)"
+          fill="rgba(255, 99, 71, 0.10)"
         />
         <path
           d="M0,96L60,117.3C120,139,240,181,360,192C480,203,600,181,720,149.3C840,117,960,75,1080,85.3C1200,96,1320,160,1380,192L1440,224L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z"

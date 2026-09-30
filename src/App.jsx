@@ -13,6 +13,7 @@ import Customers from './pages/customers/Customers';
 import AdminLogin from './pages/auth/AdminLogin';
 import AdminProfile from './pages/auth/AdminProfile';
 import ChangePassword from './pages/auth/ChangePassword';
+import SupportChats from './pages/support/SupportChats';
 
 const titles = {
   '/': 'Dashboard',
@@ -64,6 +65,7 @@ const ProtectedLayout = () => {
           <Route path="/captains" element={<Navigate to="/captains/creation" replace />} />
           <Route path="/vehicles" element={<VehiclesPricing />} />
           <Route path="/customers" element={<Customers />} />
+          <Route path="/support" element={<SupportChats />} />
           <Route path="/profile" element={<AdminProfile />} />
           <Route path="/change-password" element={<ChangePassword />} />
         </Routes>

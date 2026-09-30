@@ -1,6 +1,120 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Search, Phone, CheckCircle, Navigation, RefreshCw, X, Globe, Star } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { getMasterLocations, getCaptains } from '../../services/api';
+import socketService from '../../services/socketService';
+
+// Zone center coordinates (add more zones as needed)
+const ZONE_COORDINATES = {
+  // Chennai zones
+  'Anna Nagar': [13.1666, 80.2166],
+  'Thiruvanmiyur': [12.9843, 80.2521],
+  'Velachery': [12.9689, 80.2213],
+  'Tambaram': [12.9226, 80.1412],
+  'OMR': [12.8397, 80.2263],
+  'Adyar': [13.0064, 80.2447],
+  'Chetpet': [13.0602, 80.2292],
+  'Nungambakkam': [13.0462, 80.2393],
+
+  // Bangalore zones
+  'Koramangala': [12.9352, 77.6245],
+  'Bangalore': [12.9716, 77.5946],
+  'Indiranagar': [13.0012, 77.6399],
+  'Whitefield': [12.9698, 77.7499],
+  'MG Road': [12.9352, 77.5987],
+  'Jayanagar': [12.9352, 77.5945],
+  'Marathahalli': [12.9698, 77.7068],
+
+  // Coimbatore zones
+  'RS Puram': [11.0226, 76.9605],
+  'Peelamedu': [11.0479, 76.9739],
+  'Race Course': [11.0081, 76.9456],
+  'Saibaba Colony': [10.9909, 76.9419],
+  'Town Hall': [11.0081, 76.9364],
+
+  // Hyderabad zones
+  'Jubilee Hills': [17.3850, 78.4867],
+  'Banjara Hills': [17.3842, 78.4644],
+  'Madhapur': [17.3591, 78.5488],
+  'Kondapur': [17.4520, 78.3625],
+  'Gachibowli': [17.4409, 78.3494],
+
+  // Delhi zones
+  'Connaught Place': [28.6273, 77.1790],
+  'South Delhi': [28.5244, 77.1855],
+  'Dwarka': [28.5921, 77.0460],
+  'Noida': [28.5355, 77.3910],
+
+  // Mumbai zones
+  'Bandra': [19.0760, 72.8295],
+  'Andheri': [19.1136, 72.8697],
+  'Thane': [19.2183, 72.9781],
+  'Navi Mumbai': [19.0330, 73.0297],
+};
+
+// Create custom marker icon
+const createCustomMarkerIcon = (status) => {
+  const colors = {
+    'Available': '#22C55E',
+    'On Ride': '#FF6347',
+    'Busy': '#FFB800',
+    'Offline': '#94A3B8',
+  };
+
+  const color = colors[status] || colors['Offline'];
+
+  return L.divIcon({
+    html: `
+      <div style="
+        background: ${color};
+        color: white;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 3px solid white;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        font-weight: bold;
+        font-size: 12px;
+      ">
+        📍
+      </div>
+    `,
+    className: 'custom-marker',
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+  });
+};
+
+// Map update component
+const MapUpdater = ({ zone, city, state, country }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    // Invalidate size to ensure map fills the container
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+
+    const coords = ZONE_COORDINATES[zone];
+    if (coords) {
+      map.flyTo(coords, 14, { duration: 0.5 });
+    }
+  }, [zone, map]);
+
+  useEffect(() => {
+    // Also invalidate on window resize
+    const handleResize = () => map.invalidateSize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [map]);
+
+  return null;
+};
 
 const CaptainZoneMap = () => {
   const [masterLocations, setMasterLocations] = useState({});
@@ -18,26 +132,73 @@ const CaptainZoneMap = () => {
   useEffect(() => {
     loadMasterLocations();
     loadCaptains();
+    initializeSocket();
   }, []);
+
+  const initializeSocket = async () => {
+    try {
+      await socketService.connect();
+      console.log('🗺️ Socket connected for Captain Map');
+
+      // Listen for real-time captain location updates
+      socketService.on('captain:location_update', (data) => {
+        console.log('📍 Captain location update:', data);
+        setCaptainPins((prevPins) =>
+          prevPins.map((pin) =>
+            pin.id === data.captainId || pin.id === data.id
+              ? { ...pin, lat: data.lat, lng: data.lng, status: data.status || pin.status }
+              : pin
+          )
+        );
+      });
+
+      // Listen for captain status changes
+      socketService.on('captain:status_changed', (data) => {
+        console.log('🔄 Captain status changed:', data);
+        setCaptainPins((prevPins) =>
+          prevPins.map((pin) =>
+            pin.id === data.captainId || pin.id === data.id
+              ? { ...pin, status: data.status }
+              : pin
+          )
+        );
+      });
+
+      // Cleanup on disconnect
+      socketService.on('disconnected', () => {
+        console.log('❌ Socket disconnected - will auto-reconnect');
+      });
+    } catch (error) {
+      console.warn('Socket connection failed, using stored captain data:', error);
+    }
+  };
 
   const loadCaptains = async () => {
     const res = await getCaptains();
     if (res?.success && Array.isArray(res.data)) {
-      const pins = res.data.map((c, index) => ({
-        id: c._id || c.id || `c_${index}`,
-        name: c.name || 'Captain',
-        phone: c.phone || 'N/A',
-        vehicle: `${c.vehicleBrand || 'Vehicle'} ${c.vehicleModel || ''} (${c.vehicleNo || 'Registered'})`,
-        country: c.country || 'India',
-        state: c.state || 'Tamil Nadu',
-        city: c.city || 'Chennai',
-        zone: c.zone || 'Anna Nagar',
-        status: c.isActive ? 'Available' : 'Offline',
-        lat: c.lastLocation?.lat || (25 + (index * 15) % 50),
-        lng: c.lastLocation?.lng || (30 + (index * 12) % 40),
-        battery: '95%',
-        rating: '4.8',
-      }));
+      const pins = res.data.map((c) => {
+        // Use real location from captain data, or zone center as fallback
+        const zoneCoords = ZONE_COORDINATES[c.zone] || ZONE_COORDINATES['Anna Nagar'];
+        const lat = c.lastLocation?.lat || zoneCoords[0];
+        const lng = c.lastLocation?.lng || zoneCoords[1];
+
+        return {
+          id: c._id || c.id,
+          name: c.name || 'Captain',
+          phone: c.phone || 'N/A',
+          vehicle: `${c.vehicleBrand || 'Vehicle'} ${c.vehicleModel || ''} (${c.vehicleNo || 'Registered'})`,
+          country: c.country || 'India',
+          state: c.state || 'Tamil Nadu',
+          city: c.city || 'Chennai',
+          zone: c.zone || 'Anna Nagar',
+          // Map actual status from backend, or infer from isActive
+          status: c.status === 'ON_RIDE' ? 'On Ride' : c.status === 'BUSY' ? 'Busy' : c.isActive ? 'Available' : 'Offline',
+          lat,
+          lng,
+          battery: c.battery || '95%',
+          rating: c.rating || '4.8',
+        };
+      });
       setCaptainPins(pins);
     }
   };
@@ -120,7 +281,7 @@ const CaptainZoneMap = () => {
       <div className="glass-card" style={{ padding: '14px 18px', marginBottom: '18px' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginRight: '4px' }}>
-            <Globe size={16} color="#FF6600" />
+            <Globe size={16} color="#FF6347" />
             <span style={{ fontSize: '11.5px', fontWeight: '700', color: 'var(--text-muted)' }}>4-TIER LOCATION FILTER:</span>
           </div>
 
@@ -197,65 +358,41 @@ const CaptainZoneMap = () => {
 
       {/* Main Interactive Map & Right Panels */}
       <div style={{ display: 'grid', gridTemplateColumns: '2.4fr 1fr', gap: '18px' }}>
-        <div className="glass-card" style={{ padding: '0', overflow: 'hidden', position: 'relative', minHeight: '480px', display: 'flex', flexDirection: 'column' }}>
-          
-          <div style={{ flex: 1, position: 'relative', background: '#1E293B', minHeight: '360px' }}>
-            <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0 }}>
-              <defs>
-                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#grid)" />
-              <path d="M 0 100 Q 250 150 500 80 T 1000 200" fill="none" stroke="rgba(2, 132, 199, 0.2)" strokeWidth="18" />
-            </svg>
+        <div className="glass-card" style={{ padding: '0', overflow: 'hidden', position: 'relative', height: '500px', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ flex: 1, position: 'relative', width: '100%', minHeight: 0 }}>
+            <MapContainer
+              center={ZONE_COORDINATES[selectedZone] || ZONE_COORDINATES['Anna Nagar']}
+              zoom={14}
+              className="map-container"
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <MapUpdater zone={selectedZone} city={selectedCity} state={selectedState} country={selectedCountry} />
 
-            {filteredCaptains.map((c) => (
-              <div
-                key={c.id}
-                onClick={() => setSelectedPin(c)}
-                style={{
-                  position: 'absolute',
-                  top: `${c.lat}%`,
-                  left: `${c.lng}%`,
-                  transform: 'translate(-50%, -50%)',
-                  cursor: 'pointer',
-                  zIndex: 10,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                }}
-              >
-                <div
-                  style={{
-                    background: c.status === 'Available' ? '#22C55E' : c.status === 'On Ride' ? '#FF6600' : '#FFB800',
-                    color: '#FFF',
-                    padding: '3px 8px',
-                    borderRadius: '10px',
-                    fontSize: '11px',
-                    fontWeight: '800',
-                    boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
-                    whiteSpace: 'nowrap',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
+              {filteredCaptains.map((c) => (
+                <Marker
+                  key={c.id}
+                  position={[c.lat, c.lng]}
+                  icon={createCustomMarkerIcon(c.status)}
+                  eventHandlers={{
+                    click: () => setSelectedPin(c),
                   }}
                 >
-                  <Navigation size={9} />
-                  {c.name} ({c.status})
-                </div>
-                <div
-                  style={{
-                    width: '10px',
-                    height: '10px',
-                    borderRadius: '50%',
-                    background: c.status === 'Available' ? '#22C55E' : c.status === 'On Ride' ? '#FF6600' : '#FFB800',
-                    border: '2px solid #FFF',
-                    marginTop: '2px',
-                  }}
-                />
-              </div>
-            ))}
+                  <Popup>
+                    <div style={{ fontSize: '12px' }}>
+                      <strong>{c.name}</strong>
+                      <p style={{ margin: '4px 0', color: c.status === 'Available' ? '#22C55E' : '#FF6347' }}>
+                        {c.status}
+                      </p>
+                      <p style={{ margin: '4px 0', fontSize: '11px' }}>{c.vehicle}</p>
+                      <p style={{ margin: '4px 0', fontSize: '11px' }}>{c.phone}</p>
+                    </div>
+                  </Popup>
+                </Marker>
+              ))}
+            </MapContainer>
 
             {selectedPin && (
               <div
@@ -269,7 +406,7 @@ const CaptainZoneMap = () => {
                   padding: '14px',
                   boxShadow: 'var(--shadow-card)',
                   width: '240px',
-                  zIndex: 20,
+                  zIndex: 1000,
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
@@ -315,7 +452,7 @@ const CaptainZoneMap = () => {
                 <div key={c.id} style={{ background: 'var(--bg-input)', padding: '8px 10px', borderRadius: '8px', fontSize: '11.5px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
                     <strong>{c.name}</strong>
-                    <span style={{ color: c.status === 'Available' ? '#22C55E' : '#FF6600', fontWeight: '700' }}>{c.status}</span>
+                    <span style={{ color: c.status === 'Available' ? '#22C55E' : '#FF6347', fontWeight: '700' }}>{c.status}</span>
                   </div>
                   <div style={{ color: 'var(--text-muted)', fontSize: '10.5px' }}>{c.vehicle}</div>
                 </div>

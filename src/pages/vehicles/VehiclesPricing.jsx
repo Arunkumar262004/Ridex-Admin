@@ -116,7 +116,7 @@ const VehiclesPricing = () => {
                   </td>
                   <td><strong>{v.name}</strong></td>
                   <td>₹{v.baseFare}</td>
-                  <td><strong style={{ color: '#FF6600' }}>₹{v.ratePerKm} / km</strong></td>
+                  <td><strong style={{ color: '#FF6347' }}>₹{v.ratePerKm} / km</strong></td>
                   <td>₹{v.ratePerMin || 1.5} / min</td>
                   <td>₹{v.minFare}</td>
                   <td>{v.capacity} Seats</td>

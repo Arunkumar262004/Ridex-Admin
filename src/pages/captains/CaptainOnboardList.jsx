@@ -230,7 +230,7 @@ const CaptainOnboardList = () => {
                                 setOpenDropdownId(null);
                               }}
                             >
-                              <Eye size={14} color="#FF6600" /> View Full KYC
+                              <Eye size={14} color="#FF6347" /> View Full KYC
                             </button>
 
                             <button
@@ -428,7 +428,7 @@ const CaptainOnboardList = () => {
                   </div>
                   <div>
                     <span className="info-label">Unmasked 12-Digit Aadhar</span>
-                    <div className="info-value" style={{ color: '#FF6600', fontFamily: 'monospace', letterSpacing: '1px' }}>
+                    <div className="info-value" style={{ color: '#FF6347', fontFamily: 'monospace', letterSpacing: '1px' }}>
                       {viewingKYC.aadharNo
                         ? `${viewingKYC.aadharNo.slice(0, 4)} ${viewingKYC.aadharNo.slice(4, 8)} ${viewingKYC.aadharNo.slice(8, 12)}`
                         : 'Not provided'}

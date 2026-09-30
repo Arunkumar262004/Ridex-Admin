@@ -376,7 +376,7 @@ const MasterData = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <div>
               <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Globe size={18} color="#FF6600" /> Master Location Hierarchy
+                <Globe size={18} color="#FF6347" /> Master Location Hierarchy
               </h3>
               <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: 0 }}>
                 Hierarchical location structure: <strong>Country &rarr; State &rarr; City &rarr; Zone</strong>. Click <Edit size={12} style={{ display: 'inline', margin: '0 2px' }} /> to edit any location level.
@@ -619,7 +619,7 @@ const MasterData = () => {
               >
                 <div>
                   <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{brand}</strong>
-                  <div style={{ fontSize: '11px', color: '#FF6600' }}>Dynamic Master Record</div>
+                  <div style={{ fontSize: '11px', color: '#FF6347' }}>Dynamic Master Record</div>
                 </div>
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <button

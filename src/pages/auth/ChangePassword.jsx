@@ -61,7 +61,7 @@ const ChangePassword = () => {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '20px 24px',
-          borderLeft: '4px solid #FF6600',
+          borderLeft: '4px solid #FF6347',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -83,7 +83,7 @@ const ChangePassword = () => {
           </div>
         </div>
 
-        <div style={{ padding: '10px', borderRadius: '12px', background: 'rgba(255, 102, 0, 0.12)', color: '#FF6600' }}>
+        <div style={{ padding: '10px', borderRadius: '12px', background: 'rgba(255, 99, 71, 0.12)', color: '#FF6347' }}>
           <Lock size={24} />
         </div>
       </div>
@@ -216,7 +216,7 @@ const ChangePassword = () => {
             }}
           >
             <div style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <ShieldCheck size={16} color="#FF6600" /> Password Security Guidelines:
+              <ShieldCheck size={16} color="#FF6347" /> Password Security Guidelines:
             </div>
             <ul style={{ paddingLeft: '20px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
               <li>Minimum 8 characters in length.</li>

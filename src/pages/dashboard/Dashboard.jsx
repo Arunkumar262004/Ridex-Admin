@@ -19,6 +19,29 @@ import {
 } from 'lucide-react';
 import { getStats, getAllRides } from '../../services/api';
 
+// Number animation hook
+const useCountUp = (end, duration = 1500) => {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const increment = end / (duration / 16);
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        setCount(end);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(start));
+      }
+    }, 16);
+
+    return () => clearInterval(timer);
+  }, [end, duration]);
+
+  return count;
+};
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const [timeFilter, setTimeFilter] = useState('This month');
@@ -33,6 +56,12 @@ const Dashboard = () => {
   });
 
   const [liveRides, setLiveRides] = useState([]);
+
+  // Animated counters
+  const animatedActiveRides = useCountUp(stats.activeRides);
+  const animatedPendingRequests = useCountUp(stats.pendingRequests);
+  const animatedCompletedTrips = useCountUp(stats.completedTrips);
+  const animatedTotalCaptains = useCountUp(stats.totalCaptains);
 
   useEffect(() => {
     loadStats();
@@ -50,7 +79,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div className="dashboard-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* Top Header Action Bar (Taxi Operations Overview) */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
         <div>
@@ -78,7 +107,7 @@ const Dashboard = () => {
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
             }}
           >
-            <Calendar size={15} color="#FF6600" />
+            <Calendar size={15} color="#FF6347" />
             <select
               value={timeFilter}
               onChange={(e) => {
@@ -117,7 +146,7 @@ const Dashboard = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              background: '#FF6600',
+              background: '#FF6347',
               border: 'none',
               boxShadow: '0 4px 12px rgba(255, 102, 0, 0.3)',
             }}
@@ -129,6 +158,7 @@ const Dashboard = () => {
 
       {/* Top 4 KPI Metric Cards (Fully Interactive Navigation to Respective Pages) */}
       <div
+        className="kpi-row"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
@@ -169,11 +199,11 @@ const Dashboard = () => {
                 Active Ongoing Rides
               </span>
             </div>
-            <div style={{ fontSize: '28px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
-              {stats.activeRides || 0}
+            <div className="stat-number" style={{ fontSize: '28px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
+              {animatedActiveRides}
             </div>
           </div>
-          <ArrowRight size={18} color="#FF6600" />
+          <ArrowRight size={18} color="#FF6347" />
         </div>
 
         {/* Card 2: Pending Ride Requests -> Navigates to Onboard Queue */}
@@ -210,11 +240,11 @@ const Dashboard = () => {
                 Pending Requests
               </span>
             </div>
-            <div style={{ fontSize: '28px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
-              {stats.pendingRequests || 0}
+            <div className="stat-number" style={{ fontSize: '28px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
+              {animatedPendingRequests}
             </div>
           </div>
-          <ArrowRight size={18} color="#FF6600" />
+          <ArrowRight size={18} color="#FF6347" />
         </div>
 
         {/* Card 3: Completed Rides Today -> Navigates to Captain List */}
@@ -252,12 +282,12 @@ const Dashboard = () => {
               </span>
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-              <span style={{ fontSize: '28px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
-                {stats.completedTrips || 0}
+              <span className="stat-number" style={{ fontSize: '28px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
+                {animatedCompletedTrips}
               </span>
             </div>
           </div>
-          <ArrowRight size={18} color="#FF6600" />
+          <ArrowRight size={18} color="#FF6347" />
         </div>
 
         {/* Card 4: Fare Revenue Today -> Navigates to Vehicles & Pricing Fares */}
@@ -300,7 +330,7 @@ const Dashboard = () => {
               </span>
             </div>
           </div>
-          <ArrowRight size={18} color="#FF6600" />
+          <ArrowRight size={18} color="#FF6347" />
         </div>
       </div>
 
@@ -357,7 +387,7 @@ const Dashboard = () => {
                   { month: 'Sep', val: 40, bg: '#FED7AA' },
                   { month: 'Oct', val: 60, bg: '#FED7AA' },
                   { month: 'Nov', val: 45, bg: '#FED7AA' },
-                  { month: 'Dec', val: 90, bg: '#FF6600' },
+                  { month: 'Dec', val: 90, bg: '#FF6347' },
                 ].map((item) => (
                   <div key={item.month} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 2, flex: 1 }}>
                     <div
@@ -412,11 +442,11 @@ const Dashboard = () => {
             <div style={{ position: 'relative', width: '140px', height: '100px', margin: '0 auto' }}>
               <svg width="140" height="100" viewBox="0 0 120 80">
                 <path d="M 15 75 A 45 45 0 1 1 105 75" fill="none" stroke="var(--border-color)" strokeWidth="12" strokeLinecap="round" />
-                <path d="M 15 75 A 45 45 0 0 1 90 25" fill="none" stroke="#FF6600" strokeWidth="12" strokeLinecap="round" />
+                <path d="M 15 75 A 45 45 0 0 1 90 25" fill="none" stroke="#FF6347" strokeWidth="12" strokeLinecap="round" />
               </svg>
               <div style={{ position: 'absolute', top: '40px', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
                 <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255, 102, 0, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 4px auto' }}>
-                  <Smile size={18} color="#FF6600" />
+                  <Smile size={18} color="#FF6347" />
                 </div>
                 <div style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)' }}>
                   {stats.totalCaptains ? '8.5 hrs.' : '0.0 hrs.'}
@@ -432,7 +462,7 @@ const Dashboard = () => {
         {/* Column 3: Daily Operational Commission Revenue */}
         <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
-            <div style={{ fontSize: '22px', fontWeight: '800', color: '#FF6600', letterSpacing: '-0.5px' }}>
+            <div style={{ fontSize: '22px', fontWeight: '800', color: '#FF6347', letterSpacing: '-0.5px' }}>
               ₹{Math.round((stats.totalRevenue || 0) * 0.15).toLocaleString()}
             </div>
             <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
@@ -444,8 +474,8 @@ const Dashboard = () => {
             <svg width="100%" height="100%" viewBox="0 0 200 80" preserveAspectRatio="none">
               <defs>
                 <linearGradient id="costGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#FF6600" stopOpacity="0.4" />
-                  <stop offset="100%" stopColor="#FF6600" stopOpacity="0.0" />
+                  <stop offset="0%" stopColor="#FF6347" stopOpacity="0.4" />
+                  <stop offset="100%" stopColor="#FF6347" stopOpacity="0.0" />
                 </linearGradient>
               </defs>
               <path
@@ -455,10 +485,10 @@ const Dashboard = () => {
               <path
                 d="M 0 60 Q 40 40 80 55 T 160 20 T 200 35"
                 fill="none"
-                stroke="#FF6600"
+                stroke="#FF6347"
                 strokeWidth="2.5"
               />
-              <circle cx="160" cy="20" r="4" fill="#FF6600" stroke="#FFF" strokeWidth="2" />
+              <circle cx="160" cy="20" r="4" fill="#FF6347" stroke="#FFF" strokeWidth="2" />
             </svg>
           </div>
         </div>
@@ -474,7 +504,7 @@ const Dashboard = () => {
             </h3>
             <button
               onClick={() => navigate('/captains/zone-map')}
-              style={{ background: 'none', border: 'none', fontSize: '12px', fontWeight: '600', color: '#FF6600', cursor: 'pointer' }}
+              style={{ background: 'none', border: 'none', fontSize: '12px', fontWeight: '600', color: '#FF6347', cursor: 'pointer' }}
             >
               See Live Map &gt;
             </button>
@@ -494,7 +524,7 @@ const Dashboard = () => {
                 const drop = ride.dropoffLocation?.address || 'Drop Point';
 
                 return (
-                  <div key={ride._id || ride.id} style={{ background: 'var(--bg-input)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                  <div key={ride._id || ride.id} className="ride-card" style={{ background: 'var(--bg-input)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
                       <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#FDBA74', color: '#7C2D12', fontWeight: '700', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {customerName.charAt(0)}
@@ -506,7 +536,7 @@ const Dashboard = () => {
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11.5px', color: 'var(--text-muted)', marginBottom: '12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><MapPin size={13} color="#FF6600" /> <strong>Pickup:</strong> {pickup}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><MapPin size={13} color="#FF6347" /> <strong>Pickup:</strong> {pickup}</div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Navigation size={13} color="#22C55E" /> <strong>Drop:</strong> {drop}</div>
                     </div>
 
@@ -545,7 +575,7 @@ const Dashboard = () => {
             </h3>
             <button
               onClick={() => navigate('/vehicles')}
-              style={{ background: 'none', border: 'none', fontSize: '12px', fontWeight: '600', color: '#FF6600', cursor: 'pointer' }}
+              style={{ background: 'none', border: 'none', fontSize: '12px', fontWeight: '600', color: '#FF6347', cursor: 'pointer' }}
             >
               See Vehicles & Pricing &gt;
             </button>
@@ -568,9 +598,9 @@ const Dashboard = () => {
                     <div style={{ position: 'relative', width: '80px', height: '40px', margin: '0 auto 4px auto' }}>
                       <svg width="80" height="40" viewBox="0 0 100 50">
                         <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="var(--border-color)" strokeWidth="10" strokeLinecap="round" />
-                        <path d={`M 10 50 A 40 40 0 0 1 ${10 + (completionRate * 0.8)} ${50 - (completionRate * 0.3)}`} fill="none" stroke="#FF6600" strokeWidth="10" strokeLinecap="round" />
+                        <path d={`M 10 50 A 40 40 0 0 1 ${10 + (completionRate * 0.8)} ${50 - (completionRate * 0.3)}`} fill="none" stroke="#FF6347" strokeWidth="10" strokeLinecap="round" />
                       </svg>
-                      <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', fontSize: '13px', fontWeight: '800', color: '#FF6600' }}>
+                      <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', fontSize: '13px', fontWeight: '800', color: '#FF6347' }}>
                         {completionRate}%
                       </div>
                     </div>
@@ -603,7 +633,7 @@ const Dashboard = () => {
                     const cancH = totalCount > 0 ? 6 + (cancelledCount * 8) : 4;
                     return (
                       <div key={day} style={{ display: 'flex', alignItems: 'flex-end', gap: '3px' }}>
-                        <div style={{ width: '8px', height: `${compH}px`, background: '#FF6600', borderRadius: '2px 2px 0 0' }} />
+                        <div style={{ width: '8px', height: `${compH}px`, background: '#FF6347', borderRadius: '2px 2px 0 0' }} />
                         <div style={{ width: '8px', height: `${cancH}px`, background: '#EF4444', borderRadius: '2px 2px 0 0' }} />
                       </div>
                     );
@@ -626,7 +656,7 @@ const Dashboard = () => {
           <div className="modal-card" style={{ maxWidth: '440px' }}>
             <div className="modal-header">
               <div className="modal-header-title">
-                <div className="modal-header-icon" style={{ background: 'rgba(255, 102, 0, 0.15)', color: '#FF6600' }}>
+                <div className="modal-header-icon" style={{ background: 'rgba(255, 102, 0, 0.15)', color: '#FF6347' }}>
                   <Navigation size={18} />
                 </div>
                 <h3>Ride Request Details</h3>
@@ -650,7 +680,7 @@ const Dashboard = () => {
               <div style={{ background: 'var(--bg-input)', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
                 <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block' }}>Pickup Location</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                  <MapPin size={16} color="#FF6600" />
+                  <MapPin size={16} color="#FF6347" />
                   <strong style={{ fontSize: '13.5px', color: 'var(--text-primary)' }}>{selectedRideModal.pickup}</strong>
                 </div>
               </div>
